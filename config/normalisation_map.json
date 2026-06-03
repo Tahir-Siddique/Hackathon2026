@@ -55,7 +55,13 @@
       "display_name": "Cisco IOS XE",
       "vendor": "cisco",
       "product": "ios_xe",
-      "aliases": ["cisco ios xe", "ios xe", "cisco ios"]
+      "aliases": [
+        "cisco ios xe",
+        "ios xe",
+        "cisco ios",
+        "cisco router",
+        "cisco ios router"
+      ]
     },
     {
       "display_name": "VMware vSphere",
@@ -139,6 +145,12 @@
       "vendor": "nginx",
       "product": "nginx",
       "aliases": ["nginx", "nginx web server"]
+    },
+    {
+      "display_name": "Linux",
+      "vendor": "linux",
+      "product": "linux_kernel",
+      "aliases": ["linux", "linux os", "ubuntu linux", "debian linux"]
     }
   ]
 }

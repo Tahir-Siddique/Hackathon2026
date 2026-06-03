@@ -34,6 +34,7 @@ Open http://127.0.0.1:8000 — see [ui/README.md](ui/README.md).
 
 - [PLAN.md](PLAN.md) — implementation steps
 - [DEMO.md](DEMO.md) — 5-minute presentation script
+- [REQUIREMENTS_VERIFICATION.md](REQUIREMENTS_VERIFICATION.md) — guide compliance & use cases
 - [data/README.md](data/README.md) — dataset layout
 
 ## Tests
