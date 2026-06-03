@@ -2,7 +2,20 @@
 
 Aligned with **Hackathon Guide §9 Suggested Build Approach** (5-hour build → 5-minute presentation).
 
-**Approach:** Python data pipeline (Approach A) — offline feeds only, no live APIs.
+**Approach:** Python data pipeline ([Approach A](PLAN.md)) + optional [Web UI](ui/README.md) (FastAPI, Jinja, Tailwind).
+
+---
+
+## Table of contents
+
+1. [Before you present](#before-you-present)
+2. [Architecture diagrams](#architecture-diagrams)
+3. [Code & file map (clickable)](#code--file-map-clickable)
+4. [Hour-by-hour build (§9)](#what-we-built-9--hour-by-hour)
+5. [5-minute script](#5-minute-presentation-script)
+6. [Web UI demo](#web-ui-demo-stretch)
+7. [Limitations & evaluation](#limitations--state-clearly--guide-73)
+8. [Commands reference](#commands-reference)
 
 ---
 
@@ -13,258 +26,459 @@ cd c:\Users\tahir\Desktop\Hackathon2026
 .\.venv\Scripts\Activate.ps1
 python translate.py --brief
 pytest -q
+# Optional UI:
+uvicorn ui.app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-Have open:
+**Open these files during the demo (click paths in VS Code / Cursor):**
 
-- `data/sample_asset_list.txt` (input)
-- `output/prioritised_cves.csv` (output)
-- `output/executive_brief.md` (optional summary)
-- `config/normalisation_map.json` (hardest step)
+| Role | Path |
+|------|------|
+| Input (facilitator list) | [data/sample_asset_list.txt](data/sample_asset_list.txt) |
+| Normalisation map | [config/normalisation_map.json](config/normalisation_map.json) |
+| Output CSV | [output/prioritised_cves.csv](output/prioritised_cves.csv) |
+| Executive brief | [output/executive_brief.md](output/executive_brief.md) |
+| CLI entrypoint | [translate.py](translate.py) |
+| Pipeline orchestrator | [src/pipeline.py](src/pipeline.py) |
+| This script | [DEMO.md](DEMO.md) |
+
+---
+
+## Architecture diagrams
+
+### 1. System context — who and what
+
+```mermaid
+flowchart TB
+  subgraph user [User]
+    SA[SMB sysadmin / IT volunteer]
+  end
+
+  subgraph inputs [Inputs]
+    AL[Asset list<br/>informal names + versions]
+    OFF[Offline data feeds<br/>no live APIs]
+  end
+
+  subgraph tool [CVE-to-My-Stack Translator]
+    CLI[translate.py CLI]
+    WEB[ui/ FastAPI web app]
+    PIPE[src/pipeline.py]
+  end
+
+  subgraph outputs [Outputs]
+    CSV[prioritised_cves.csv]
+    BRIEF[executive_brief.md]
+    TABLE[Console / HTML table]
+  end
+
+  SA --> AL
+  AL --> CLI
+  AL --> WEB
+  CLI --> PIPE
+  WEB --> PIPE
+  OFF --> PIPE
+  PIPE --> CSV
+  PIPE --> BRIEF
+  PIPE --> TABLE
+  SA --> CSV
+```
+
+### 2. End-to-end data flow
+
+```mermaid
+flowchart LR
+  subgraph data [data/ folder]
+    NVD[(CVE-2025.json<br/>FKIE NVD)]
+    KEV[(known_exploited_<br/>vulnerabilities.json)]
+    EPSS[(epss_scores-*.csv)]
+    CPE[(nvdcpe-2.0.zip<br/>reference only)]
+  end
+
+  subgraph hour1 [Hour 1 — Load]
+    LK[load_kev]
+    LE[load_epss]
+    LN[load_nvd]
+    PA[parse_asset_list]
+  end
+
+  subgraph hour2 [Hour 2 — Normalise]
+    MAP[normalisation_map.json]
+    NA[normalise_assets]
+  end
+
+  subgraph hour3 [Hour 3 — Match + Enrich]
+    MC[match_cves_to_assets]
+    ER[enrich_and_rank]
+  end
+
+  subgraph hour4 [Hour 4 — Output]
+    SUM[add_summaries]
+    EXP[write_csv / write_brief]
+  end
+
+  KEV --> LK
+  EPSS --> LE
+  NVD --> LN
+  MAP --> NA
+  LK --> ER
+  LE --> ER
+  LN --> MC
+  PA --> NA
+  NA --> MC
+  MC --> ER
+  ER --> SUM
+  SUM --> EXP
+```
+
+### 3. Pipeline sequence (runtime)
+
+```mermaid
+sequenceDiagram
+  actor User
+  participant CLI as translate.py
+  participant Pipe as run_pipeline
+  participant Load as loaders.py
+  participant Norm as normalise.py
+  participant Match as match.py
+  participant Rank as rank.py
+  participant Out as export.py
+
+  User->>CLI: asset list path
+  CLI->>Pipe: run_pipeline()
+  Pipe->>Load: load_kev / load_epss / load_nvd
+  Pipe->>Load: parse_asset_list
+  Pipe->>Norm: normalise_assets
+  Norm-->>Pipe: mapped + unmapped
+  Pipe->>Match: match_cves_to_assets
+  Match-->>Pipe: raw matches
+  Pipe->>Rank: enrich_and_rank
+  Rank-->>Pipe: sorted rows
+  Pipe->>Out: add_summaries + write_csv
+  Out-->>User: prioritised_cves.csv
+```
+
+### 4. Module dependency map
+
+```mermaid
+flowchart TD
+  T[translate.py<br/>main]
+  U[ui/app/main.py<br/>analyze]
+  P[src/pipeline.py<br/>run_pipeline]
+
+  T --> P
+  U --> P
+
+  P --> L[src/loaders.py]
+  P --> N[src/normalise.py]
+  P --> M[src/match.py]
+  P --> R[src/rank.py]
+  P --> S[src/summarise.py]
+  P --> E[src/export.py]
+
+  PATH[src/paths.py<br/>dataset_status]
+  L --> PATH
+  T --> PATH
+  U --> PATH
+
+  N --> CFG[config/normalisation_map.json]
+  CPE[src/cpe_lookup.py] --> CFG
+  LOOKUP[scripts/lookup_cpe.py] --> CPE
+```
+
+### 5. Normalisation — hardest step (detail)
+
+```mermaid
+flowchart TD
+  A[User text<br/>Office 365 Business] --> C{Exact alias<br/>in map?}
+  C -->|yes| HIT[microsoft:365_apps]
+  C -->|no| F[rapidfuzz<br/>token_sort_ratio ≥ 85]
+  F -->|match| HIT
+  F -->|no match| MISS[Unmapped asset<br/>silent CVE miss risk]
+  HIT --> M[match_cves_to_assets]
+  REF[data/nvdcpe-2.0.zip<br/>lookup_cpe.py] -.->|verify only| CFG[config/normalisation_map.json]
+  CFG --> C
+```
+
+### 6. Ranking logic
+
+```mermaid
+flowchart LR
+  M[Matched CVE rows] --> D[Dedupe by CVE + asset]
+  D --> E[Attach EPSS + KEV flag]
+  E --> S[Sort]
+  S --> S1[1. KEV = yes first]
+  S1 --> S2[2. urgency_score desc]
+  S2 --> S3[3. EPSS desc]
+  S3 --> S4[4. CVSS desc]
+  S4 --> CAP[Cap top N rows<br/>default 50]
+  CAP --> R[risk_summary template]
+```
+
+### 7. §9 build timeline (for slides)
+
+```mermaid
+gantt
+  title Suggested 5-hour build (Hackathon §9)
+  dateFormat X
+  axisFormat %H:%M
+
+  section Hour 1
+  Load EPSS KEV NVD           :h1, 0, 1
+  section Hour 2
+  Normalisation dictionary    :h2, 1, 2
+  section Hour 3
+  CVE matching + EPSS/KEV     :h3, 2, 3
+  section Hour 4
+  Rank + CSV + summaries      :h4, 3, 4
+  section Hour 5
+  Tests + demo prep           :h5, 4, 5
+```
+
+---
+
+## Code & file map (clickable)
+
+Paths are relative to [Hackathon2026/](.). In Cursor/VS Code, **Ctrl+Click** a link to open the file. Functions link to their definition line.
+
+### Entry points
+
+| What | Link |
+|------|------|
+| CLI | [translate.py](translate.py) → [`main()`](translate.py#L77) |
+| Web UI app | [ui/app/main.py](ui/app/main.py) → [`analyze()`](ui/app/main.py#L83) |
+| Pipeline | [src/pipeline.py](src/pipeline.py) → [`run_pipeline()`](src/pipeline.py#L16) |
+| Notebook | [starter_notebook.ipynb](starter_notebook.ipynb) |
+
+### Hour 1 — Data loading
+
+| Function | File |
+|----------|------|
+| [`load_kev()`](src/loaders.py#L13) | [src/loaders.py](src/loaders.py) |
+| [`load_epss()`](src/loaders.py#L23) | [src/loaders.py](src/loaders.py) |
+| [`load_nvd()`](src/loaders.py#L41) | [src/loaders.py](src/loaders.py) |
+| [`parse_asset_list()`](src/loaders.py#L57) | [src/loaders.py](src/loaders.py) |
+| [`smoke_test()`](src/loaders.py#L84) | [src/loaders.py](src/loaders.py) |
+| [`dataset_status()`](src/paths.py#L87) | [src/paths.py](src/paths.py) |
+| [`resolve_nvd_path()`](src/paths.py#L69) | [src/paths.py](src/paths.py) |
+
+**Data files**
+
+| Feed | Local file | Upstream |
+|------|------------|----------|
+| NVD CVEs | [data/CVE-2025.json](data/CVE-2025.json) | [FKIE nvd-json-data-feeds](https://github.com/fkie-cad/nvd-json-data-feeds/releases) |
+| CISA KEV | [data/known_exploited_vulnerabilities.json](data/known_exploited_vulnerabilities.json) | [CISA KEV JSON](https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json) |
+| EPSS | [data/epss_scores-2026-06-02.csv](data/epss_scores-2026-06-02.csv) | [EPSS daily scores](https://epss.empiricalsecurity.com/) |
+| CPE dict | [data/nvdcpe-2.0.zip](data/nvdcpe-2.0.zip) | [NVD CPE Dictionary 2.0](https://nvd.nist.gov/vuln/data-feeds) |
+
+**Scripts:** [scripts/download_datasets.py](scripts/download_datasets.py) · [scripts/decompress_nvd.py](scripts/decompress_nvd.py)
+
+### Hour 2 — Normalisation
+
+| Function | File |
+|----------|------|
+| [`load_normalisation_map()`](src/normalise.py#L22) | [src/normalise.py](src/normalise.py) |
+| [`normalise_asset()`](src/normalise.py#L42) | [src/normalise.py](src/normalise.py) |
+| [`normalise_assets()`](src/normalise.py#L88) | [src/normalise.py](src/normalise.py) |
+| [`search_cpe_dictionary()`](src/cpe_lookup.py#L57) | [src/cpe_lookup.py](src/cpe_lookup.py) |
+
+**Config:** [config/normalisation_map.json](config/normalisation_map.json)  
+**CPE docs:** [data/CPE_DICTIONARY.md](data/CPE_DICTIONARY.md)  
+**Lookup CLI:** [scripts/lookup_cpe.py](scripts/lookup_cpe.py)
+
+### Hour 3 — Matching & enrich
+
+| Function | File |
+|----------|------|
+| [`parse_cpe_vendor_product()`](src/match.py#L8) | [src/match.py](src/match.py) |
+| [`extract_cpe_keys()`](src/match.py#L22) | [src/match.py](src/match.py) |
+| [`match_cves_to_assets()`](src/match.py#L66) | [src/match.py](src/match.py) |
+| [`get_cvss_score()`](src/match.py#L43) | [src/match.py](src/match.py) |
+| [`enrich_and_rank()`](src/rank.py#L17) | [src/rank.py](src/rank.py) |
+| [`combined_urgency_score()`](src/rank.py#L8) | [src/rank.py](src/rank.py) |
+
+### Hour 4 — Summaries & export
+
+| Function | File |
+|----------|------|
+| [`build_risk_summary()`](src/summarise.py#L16) | [src/summarise.py](src/summarise.py) |
+| [`add_summaries()`](src/summarise.py#L30) | [src/summarise.py](src/summarise.py) |
+| [`write_csv()`](src/export.py#L21) | [src/export.py](src/export.py) |
+| [`write_brief()`](src/export.py#L51) | [src/export.py](src/export.py) |
+| [`print_table()`](src/export.py#L30) | [src/export.py](src/export.py) |
+
+### Hour 5 — Tests
+
+| Suite | Path |
+|-------|------|
+| All tests | [tests/](tests/) |
+| Loaders | [tests/test_loaders.py](tests/test_loaders.py) |
+| Normalisation (12 samples) | [tests/test_normalise.py](tests/test_normalise.py) |
+| Matching | [tests/test_match.py](tests/test_match.py) |
+| Ranking / KEV order | [tests/test_rank.py](tests/test_rank.py) |
+| Full pipeline | [tests/test_pipeline.py](tests/test_pipeline.py) |
+| CLI | [tests/test_cli.py](tests/test_cli.py) |
+| Config | [pytest.ini](pytest.ini) |
+
+### Web UI
+
+| Item | Link |
+|------|------|
+| Routes | [ui/app/main.py](ui/app/main.py) |
+| Home template | [ui/templates/index.html](ui/templates/index.html) |
+| Results template | [ui/templates/results.html](ui/templates/results.html) |
+| Layout + Tailwind | [ui/templates/base.html](ui/templates/base.html) |
+| UI readme | [ui/README.md](ui/README.md) |
 
 ---
 
 ## What we built (§9 — hour by hour)
 
-This is how the project follows the official suggested sequence. Use it to **explain your design** in the demo.
-
 ### Hour 1 — Data loading and exploration (0:00–1:00)
 
-**Guide objectives**
+**Guide objectives:** Load EPSS, KEV, NVD; explore structure; load sample assets.
 
-1. Load EPSS CSV — confirm columns and score range  
-2. Load CISA KEV JSON — Python `set` of CVE IDs  
-3. Load one year of NVD CVE JSON — find CPEs, descriptions, CVSS  
-4. Load the facilitator sample asset list  
+| Item | Link |
+|------|------|
+| Loaders module | [src/loaders.py](src/loaders.py) |
+| Smoke test | [`python translate.py --smoke`](translate.py) → [`smoke_test()`](src/loaders.py#L84) |
+| Notebook | [starter_notebook.ipynb](starter_notebook.ipynb) |
+| Download all feeds | [scripts/download_datasets.py](scripts/download_datasets.py) |
 
-**What we implemented**
-
-| Item | File / command |
-|------|----------------|
-| Loaders | `src/loaders.py` |
-| EPSS → dict | `load_epss()` |
-| KEV → set | `load_kev()` |
-| NVD → list | `load_nvd()` from `data/CVE-2025.json` |
-| Asset parser | `parse_asset_list()` |
-| Smoke test | `python translate.py --smoke` |
-| Exploration | `starter_notebook.ipynb` (cells 1–2) |
-| Download feeds | `python scripts/download_datasets.py` |
-
-**Demo line (30s)**
-
-> “First we wired three offline feeds: NVD for CVE details and CPEs, CISA KEV for confirmed exploitation, and EPSS for likelihood in the next 30 days. Everything stays local — no API calls during the run.”
-
-**Show**
+**Demo line (30s):** Offline NVD + KEV + EPSS; no API calls at runtime.
 
 ```powershell
 python translate.py --smoke
 ```
 
-Expect: `kev_count`, `epss_count`, `nvd_count` (~1610 / ~337k / ~44525).
-
 ---
 
 ### Hour 2 — Normalisation dictionary (1:00–2:00)
 
-**Guide objectives**
+**Guide objectives:** CPE naming; ≥15 product map; fuzzy match; test sample list.
 
-1. Review CPE dictionary naming conventions  
-2. Build a map of ≥15 common products → CPE `vendor:product`  
-3. Normalisation function with fuzzy matching  
-4. Test informal inputs (sample asset list)  
+| Item | Link |
+|------|------|
+| Dictionary | [config/normalisation_map.json](config/normalisation_map.json) |
+| Fuzzy logic | [`normalise_assets()`](src/normalise.py#L88) |
+| CPE verify | [`python scripts/lookup_cpe.py "microsoft 365"`](scripts/lookup_cpe.py) |
 
-**What we implemented**
-
-| Item | File / command |
-|------|----------------|
-| Dictionary (19 products) | `config/normalisation_map.json` |
-| Fuzzy match | `src/normalise.py` (`rapidfuzz`, threshold 85) |
-| CPE 2.0 reference | `data/nvdcpe-2.0.zip` (replaces retired XML) |
-| Spot-check CPE | `python scripts/lookup_cpe.py "microsoft 365"` |
-| Docs | `data/CPE_DICTIONARY.md` |
-
-**Demo line (60s) — emphasise this as the hardest step**
-
-> “CVE matching fails silently if we map ‘Office 365 Business’ to the wrong CPE. We built an alias dictionary plus fuzzy matching so informal names hit the right `vendor:product`. All twelve facilitator sample products map at 100% confidence.”
-
-**Show**
-
-- `config/normalisation_map.json` — one entry (e.g. Microsoft 365 → `microsoft:365_apps`)  
-- Live normalisation lines when you run `translate.py` (`OK … -> microsoft:365_apps`)  
-- Optional: `python scripts/lookup_cpe.py "google chrome"` to prove against the official CPE dictionary  
+**Demo line (60s):** Silent miss if alias wrong — show one map entry + live `OK -> cpe_key` lines.
 
 ---
 
 ### Hour 3 — CVE matching and filtering (2:00–3:00)
 
-**Guide objectives**
-
-1. Filter NVD by CPE `vendor:product` from normalised assets  
-2. Run for each asset in the list  
-3. Merge matches with EPSS scores and KEV flags  
-
-**What we implemented**
-
-| Item | File |
+| Item | Link |
 |------|------|
-| Extract CPEs from NVD | `src/match.py` — `extract_cpe_keys()`, `parse_cpe_vendor_product()` |
-| Match to stack | `match_cves_to_assets()` (vendor pre-filter for speed) |
-| Enrich EPSS + KEV | `src/rank.py` — `enrich_and_rank()` |
-| Orchestration | `src/pipeline.py` |
+| CPE extract | [`extract_cpe_keys()`](src/match.py#L22) |
+| Filter | [`match_cves_to_assets()`](src/match.py#L66) |
+| Orchestration | [`run_pipeline()`](src/pipeline.py#L16) |
 
-**MVP rule (per guide):** match on `vendor:product` only — no version ranges yet.
-
-**Demo line (30s)**
-
-> “We walk each CVE’s NVD configuration blocks, pull CPE criteria strings, and keep any CVE that matches our stack. Then we attach EPSS and a yes/no KEV flag from pre-loaded dictionaries.”
-
-**Show**
-
-- Mention: ~1,183 raw matches on sample list → capped to top 50 for actionability  
+**Demo line (30s):** ~1,183 raw matches → top 50 in output.
 
 ---
 
 ### Hour 4 — Ranking and output (3:00–4:00)
 
-**Guide objectives**
-
-1. Sort: KEV entries first, then EPSS descending  
-2. Plain-English risk sentence per CVE  
-3. Write CSV  
-4. Print summary table to console  
-
-**What we implemented**
-
-| Item | File |
+| Item | Link |
 |------|------|
-| Sort + combined urgency | `src/rank.py` (KEV → urgency score → EPSS → CVSS) |
-| Risk templates | `src/summarise.py` |
-| CSV + table | `src/export.py` |
-| CLI | `translate.py` |
-| Stretch: executive brief | `translate.py --brief` → `output/executive_brief.md` |
+| Sort | [`enrich_and_rank()`](src/rank.py#L17) |
+| Risk text | [`build_risk_summary()`](src/summarise.py#L16) |
+| CSV | [output/prioritised_cves.csv](output/prioritised_cves.csv) via [`write_csv()`](src/export.py#L21) |
+| Brief | [`translate.py --brief`](translate.py) → [output/executive_brief.md](output/executive_brief.md) |
 
-**Required CSV columns**
-
-`cve_id`, `affected_asset`, `cvss`, `epss`, `kev`, `risk_summary`
-
-**Demo line (60s)**
-
-> “Ranking is KEV first — if CISA says it’s actively exploited, it goes to the top. Then we use EPSS and CVSS. Each row gets one sentence a non-expert can act on.”
-
-**Show**
-
-- Open `output/prioritised_cves.csv`  
-- Read **one** `risk_summary` aloud, e.g. top Windows Server row with KEV yes and high EPSS  
+**Demo line (60s):** KEV first; read one `risk_summary` from CSV.
 
 ---
 
-### Hour 5 — Testing, refinement, and demo prep (4:00–5:00)
+### Hour 5 — Testing and demo prep (4:00–5:00)
 
-**Guide objectives**
+| Item | Link |
+|------|------|
+| Full run | `python translate.py data/sample_asset_list.txt --brief` |
+| Tests | `pytest` → [tests/](tests/) (40 tests) |
+| Demo | [DEMO.md](DEMO.md) |
 
-1. Full pipeline on `sample_asset_list.txt`  
-2. Fix errors and edge cases  
-3. Prepare 5-minute demo (what / hardest step / output)  
-4. Stretch goals if time allows  
+---
 
-**What we implemented**
+## 5-minute presentation script
 
-| Item | File / command |
-|------|----------------|
-| End-to-end CLI | `python translate.py data/sample_asset_list.txt --brief` |
-| Tests (40) | `pytest` — `tests/` + fixtures |
-| Demo script | This file (`DEMO.md`) |
-| Stretch | Combined urgency score, `--brief`, full CLI flags |
+| Time | §9 | Action | Open |
+|------|-----|--------|------|
+| 0:00–0:30 | — | Problem: firehose → action list | [data/sample_asset_list.txt](data/sample_asset_list.txt) |
+| 0:30–1:30 | H1–H2 | Pipeline diagram + normalisation | [config/normalisation_map.json](config/normalisation_map.json) · Diagram §2–§5 above |
+| 1:30–3:00 | H3–H4 | Live run | `python translate.py --brief` → [output/prioritised_cves.csv](output/prioritised_cves.csv) |
+| 3:00–4:00 | H5 | Tests + design | `pytest -q` · [src/pipeline.py](src/pipeline.py) |
+| 4:00–5:00 | — | Limitations | Section below |
 
-**Demo line (30s)**
+**Opening:** Five-hour §9 build — load, normalise, match, rank, export.  
+**Closing:** Hardest = normalisation; value = fifty prioritised plain-English actions.
 
-> “We test against the facilitator list and automated fixtures. Forty tests cover loaders, all twelve sample normalisations, KEV-first ranking, and the full pipeline.”
+---
 
-**Show (optional, 15s)**
+## Web UI demo (stretch)
 
-```powershell
-pytest -q
+```mermaid
+flowchart LR
+  Browser --> FastAPI[ui/app/main.py]
+  FastAPI --> Pipe[run_pipeline]
+  Pipe --> CSV[ui/output/latest_prioritised_cves.csv]
+  Browser -->|Download| CSV
 ```
 
----
+```powershell
+uvicorn ui.app.main:app --reload --host 127.0.0.1 --port 8000
+```
 
-## 5-minute presentation script (walk the hours in ~5 min)
-
-| Time | §9 phase | What to do |
-|------|----------|------------|
-| **0:00–0:30** | — | **Problem:** CVE firehose vs one sysadmin; asset list in → prioritised list out. |
-| **0:30–1:30** | Hours 1–2 | **Pipeline + normalisation:** Show `sample_asset_list.txt` → dictionary → “silent miss” risk. |
-| **1:30–3:00** | Hours 3–4 | **Live run:** `python translate.py --brief` → show CSV top rows, read one risk summary. |
-| **3:00–4:00** | Hour 4–5 | **Design + quality:** Offline feeds, KEV-first, fuzzy aliases, `pytest`. |
-| **4:00–5:00** | Limits | **Honest gaps:** wrong map = miss; low EPSS ≠ safe; no version matching in MVP. |
-
-**Opening sentence**
-
-> “We followed the suggested five-hour build: load offline data, normalise the stack, match NVD, rank with KEV and EPSS, and export a short action list — here’s that pipeline running on the facilitator sample.”
-
-**Closing sentence**
-
-> “The core challenge is normalisation; the core value is turning hundreds of CVEs into fifty prioritised, plain-English actions for this specific stack.”
+Open http://127.0.0.1:8000 · Templates: [ui/templates/index.html](ui/templates/index.html) · [ui/templates/results.html](ui/templates/results.html)
 
 ---
 
 ## Limitations (state clearly — guide §7.3)
 
-1. **Silent misses** — wrong product alias → CVE never appears  
-2. **EPSS** — predictive, not “safe”  
-3. **KEV** — absence does not mean unexploited  
-4. **Versions** — MVP matches product family only, not version ranges  
-5. **CPE dictionary** — legacy XML retired; we use NVD CPE Dictionary 2.0 (`nvdcpe-2.0.zip`) for reference only  
+1. **Silent misses** — wrong alias in [config/normalisation_map.json](config/normalisation_map.json)
+2. **EPSS** — predictive only ([`epss_label()`](src/summarise.py#L8))
+3. **KEV** — absence ≠ unexploited
+4. **Versions** — no range match in [`match_cves_to_assets()`](src/match.py#L66)
+5. **CPE XML retired** — see [data/CPE_DICTIONARY.md](data/CPE_DICTIONARY.md)
 
 ---
 
 ## Evaluation checklist (guide §11)
 
-| Criterion | How we demonstrate |
-|-----------|-------------------|
-| Data pipeline | `--smoke` or live run loads NVD + KEV + EPSS |
-| Normalisation | 12/12 sample assets; show `normalisation_map.json` |
-| Matching | Relevant CVEs for Chrome, Windows, OpenSSL, etc. |
-| Prioritisation | KEV rows at top of CSV |
-| Output clarity | Read one `risk_summary` aloud |
-| Limitations | 30-second honest list above |
-| Tests | `pytest` — 40 passed |
+| Criterion | Demonstrate with |
+|-----------|------------------|
+| Data pipeline | [`--smoke`](translate.py) · [`dataset_status()`](src/paths.py#L87) |
+| Normalisation | [tests/test_normalise.py](tests/test_normalise.py) · 12/12 sample |
+| Matching | [tests/test_match.py](tests/test_match.py) · [tests/test_pipeline.py](tests/test_pipeline.py) |
+| Prioritisation | [tests/test_rank.py](tests/test_rank.py) · KEV rows top of CSV |
+| Output clarity | Read [output/prioritised_cves.csv](output/prioritised_cves.csv) `risk_summary` |
+| Limitations | This section |
+| Tests + UI | `pytest` · [ui/app/main.py](ui/app/main.py) |
 
 ---
 
 ## Commands reference
 
-| Command | §9 phase | Purpose |
-|---------|----------|---------|
-| `python scripts/download_datasets.py` | Hour 1 | Download KEV, EPSS, NVD, CPE zip |
-| `python translate.py --smoke` | Hour 1 | Verify feeds load |
-| `python scripts/lookup_cpe.py "…"` | Hour 2 | Verify CPE vendor:product |
-| `python translate.py --brief` | Hours 3–4 | Full pipeline + CSV + brief |
-| `jupyter notebook starter_notebook.ipynb` | Hours 1–4 | Step-by-step exploration |
-| `pytest` | Hour 5 | Automated validation |
+| Command | Phase | Links |
+|---------|-------|-------|
+| `python scripts/download_datasets.py` | H1 | [script](scripts/download_datasets.py) |
+| `python translate.py --smoke` | H1 | [translate.py](translate.py) |
+| `python scripts/lookup_cpe.py "…"` | H2 | [script](scripts/lookup_cpe.py) |
+| `python translate.py --brief` | H3–4 | [translate.py](translate.py) · [pipeline](src/pipeline.py) |
+| `jupyter notebook starter_notebook.ipynb` | H1–4 | [notebook](starter_notebook.ipynb) |
+| `pytest` | H5 | [tests/](tests/) |
+| `uvicorn ui.app.main:app --reload` | UI | [ui/README.md](ui/README.md) |
 
 ---
 
-## Architecture (one diagram for slides)
+## Slide deck tip
 
-```text
-sample_asset_list.txt
-        │
-        ▼
-  [Hour 2] Normalise (dictionary + rapidfuzz)
-        │
-        ▼
-  [Hour 3] Match NVD CPE configurations
-        │
-        ▼
-  [Hour 3] Enrich EPSS + KEV
-        │
-        ▼
-  [Hour 4] Rank (KEV first) → Summarise → CSV + brief
-```
+Export diagrams for PowerPoint:
 
-**Data inputs (Hour 1):** `CVE-2025.json`, `known_exploited_vulnerabilities.json`, `epss_scores-*.csv`
+1. Open this file in VS Code / Cursor with a Mermaid preview extension, or paste diagrams into [mermaid.live](https://mermaid.live) and export PNG/SVG.
+2. Use **Diagram §1** (context) on slide 2, **§2** (data flow) on slide 3, **§5** (normalisation) when discussing the hardest step, **§6** (ranking) before showing CSV.
 
 ---
 
-*Demo guide v2 — structured on Hackathon Project Guide §9 Suggested Build Approach*
+*Demo guide v3 — §9 build, clickable map, Mermaid diagrams, Web UI*
