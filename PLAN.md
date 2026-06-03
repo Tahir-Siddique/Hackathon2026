@@ -1,198 +1,140 @@
-# CVE-to-My-Stack Translator — Hackathon Plan
+# CVE-to-My-Stack Translator — Implementation Plan
 
 **Event:** CyberHack 2026 — Project 1  
 **Duration:** 5.5 hours maximum  
-**Team size:** 3–5 participants  
-**Source:** [CVE-to-My-Stack Translator Hackathon Project Guide v01](file:///c:/Users/tahir/Downloads/CVE-to-My-Stack_Translator_Hackathon_Project_Guide_v01_new.pdf)
+**Source:** CVE-to-My-Stack Translator Hackathon Project Guide v01
 
 ---
 
-## 1. Problem Statement
+## Goal
 
-Every day, dozens of new CVEs are published. Small IT teams cannot read them all or determine which apply to their specific software versions and configurations.
+Take an informal asset list (product names + versions) and output a **prioritised CSV/table** of relevant CVEs with CVSS, EPSS, KEV flag, and a plain-English risk sentence.
 
-**Core problem (one sentence):** A small IT administrator cannot filter hundreds of daily CVEs down to the few that actually affect their systems. This tool does that for them.
-
-**Deliverable:** Given a list of software assets (informal names + versions), return a short, prioritised action list of relevant CVEs with plain-English explanations, ranked by real-world exploitability.
-
-**Hardest part:** Normalisation — mapping informal product names to canonical CPE identifiers. Wrong mapping causes **silent misses** (no error, CVE simply absent from output).
+**Hardest step:** Normalisation (informal name → CPE). Wrong mapping = CVE missing with no error.
 
 ---
 
-## 2. Success Criteria
+## MVP checklist
 
-### MVP (required)
-
-| # | Objective |
-|---|-----------|
-| 1 | Load and parse at least two offline data feeds (NVD, KEV, EPSS) |
-| 2 | Normalisation dictionary: 15–20 common software names → CPE identifiers |
-| 3 | Matching function: filter CVE dataset to user's asset list |
-| 4 | Rank with EPSS scores and KEV flags |
-| 5 | Structured output (CSV + console table) |
-| 6 | Demo against facilitator sample asset list without errors |
-
-### Required output columns
-
-| Column | Description |
-|--------|-------------|
-| CVE ID | e.g. `CVE-2024-1234` |
-| Affected asset | User's own product name |
-| CVSS score | 0–10 severity |
-| EPSS score | 0–1 exploitation probability |
-| KEV flag | `yes` / `no` |
-| Risk summary | One-sentence plain-English description |
-
-### Stretch goals (if time permits)
-
-- [ ] One-page summary brief (in addition to CSV)
-- [ ] Combined CVSS + EPSS urgency score
-- [ ] Version range matching (e.g. CVE affects 3.0–3.5, asset is 3.2)
-- [ ] CLI accepting asset list file as argument
-- [ ] Minimal Flask or HTML front end
+- [ ] Load NVD + KEV + EPSS from local files only (no live APIs)
+- [ ] 15–20 product aliases mapped to CPE `vendor:product`
+- [ ] Match CVEs to normalised assets
+- [ ] Rank: KEV first, then EPSS descending
+- [ ] Export CSV with: CVE ID, affected asset, CVSS, EPSS, KEV, risk summary
+- [ ] Run cleanly on facilitator `sample_asset_list.txt`
 
 ---
 
-## 3. Constraints
+## Constraints
 
-### Hard constraints
-
-- **No external vulnerability APIs** — use only pre-downloaded local files (NVD, CISA KEV, EPSS). Internet allowed for docs/AI, not live CVE feeds.
-- **5.5-hour time limit** — scope for demo readiness.
-- **Current-year CVE file** unless sample assets require older years.
-
-### Scope constraints (MVP)
-
-- Normalisation: 15–20 products done **well**, not exhaustive coverage.
-- **No version range matching** in core build — exact/substring CPE vendor:product match is sufficient.
-
-### Known limitations (explain in demo)
-
-| Limitation | Implication |
-|------------|-------------|
-| Wrong CPE mapping | CVE silently omitted from results |
-| Low EPSS | Predictive only — not “safe” |
-| Not in KEV | May still be exploited; not yet confirmed/reported |
-| NVD enrichment gaps | Older/low-profile CVEs may lack complete CPE data |
+| Rule | Detail |
+|------|--------|
+| Data | Offline files only — no NVD/CISA/EPSS API calls |
+| CVE year | Use current year JSON unless assets need older year |
+| Versions | MVP ignores version ranges — match on `vendor:product` only |
+| Scope | 15–20 products mapped well; accuracy over breadth |
 
 ---
 
-## 4. Technology Choice
+## Stack & layout
 
-**Recommended: Approach A — Python data pipeline**
-
-| Library | Purpose |
-|---------|---------|
-| `pandas` | Load, filter, sort CVE and EPSS data |
-| `rapidfuzz` | Fuzzy matching for normalisation |
-| `json`, `csv`, `gzip`, `lzma` (stdlib) | Parse feeds, decompress archives |
-| `tabulate` (optional) | Console table for demo |
-| `flask` (optional, stretch) | Minimal browser UI |
-
-- Python 3.10+
-- Jupyter notebook for exploration; `translate.py` for final demo
-- No database — in-memory DataFrames and dicts
-
-**Alternative:** Approach B (vanilla JS + Fuse.js + PapaParse) if team is JS-first. Mixed teams: Python pipeline + HTML reading generated CSV.
-
----
-
-## 5. Architecture
-
-```mermaid
-flowchart LR
-  A[Asset list .txt] --> B[Normalise to CPE vendor:product]
-  B --> C[Filter NVD CVEs by CPE in configurations]
-  C --> D[Enrich: EPSS dict + KEV set]
-  D --> E[Rank: KEV first, then EPSS desc]
-  E --> F[Plain-English risk summary]
-  F --> G[CSV + console table]
-```
-
-### Suggested repository layout
+**Python 3.10+** — `pandas`, `rapidfuzz`, `tabulate` (optional `flask` for stretch UI)
 
 ```
 Hackathon2026/
-├── data/                              # Event-day files (gitignore large JSON)
-│   ├── CVE-2025.json                  # Primary NVD year (or CVE-2024.json)
+├── data/
+│   ├── CVE-2025.json
 │   ├── known_exploited_vulnerabilities.json
 │   ├── epss_scores-YYYY-MM-DD.csv
 │   └── sample_asset_list.txt
 ├── config/
-│   └── normalisation_map.json         # Aliases → vendor:product
+│   └── normalisation_map.json
 ├── src/
-│   ├── loaders.py                     # NVD, KEV, EPSS
-│   ├── normalise.py                   # Dictionary + fuzzy match
-│   ├── match.py                       # CPE filter on NVD records
-│   ├── rank.py                        # KEV + EPSS sorting
-│   ├── summarise.py                   # Risk sentence templates
-│   └── export.py                      # CSV + tabulate output
+│   ├── loaders.py
+│   ├── normalise.py
+│   ├── match.py
+│   ├── rank.py
+│   ├── summarise.py
+│   └── export.py
 ├── output/
 │   └── prioritised_cves.csv
-├── translate.py                       # CLI entrypoint
-├── starter_notebook.ipynb             # Optional facilitator starter
+├── translate.py
 ├── requirements.txt
-├── PLAN.md                            # This document
-└── .gitignore
+└── PLAN.md
+```
+
+```mermaid
+flowchart LR
+  A[Asset list] --> B[Normalise]
+  B --> C[Match NVD]
+  C --> D[EPSS + KEV]
+  D --> E[Rank]
+  E --> F[CSV output]
 ```
 
 ---
 
-## 6. Data Feeds (offline only)
+## Implementation steps
 
-| Feed | Format | Use |
-|------|--------|-----|
-| NVD CVE (FKIE reconstruction) | JSON per year (`CVE-2025.json`) | Primary CVE DB: ID, description, CVSS, CPE configurations |
-| CISA KEV | JSON | Set of actively exploited CVE IDs — strongest urgency signal |
-| EPSS | CSV (`cve`, `epss`, `percentile`) | Dict keyed by CVE ID — O(1) lookup |
-| CPE dictionary | XML/JSON | Reference only for building normalisation map — do not load fully |
+### Step 0 — Project setup
 
-### Loading patterns
+- [ ] Create folder structure above
+- [ ] Add `requirements.txt`: `pandas`, `rapidfuzz`, `tabulate`
+- [ ] Create virtualenv and install dependencies
+- [ ] Copy event data files into `data/`
+- [ ] Add `.gitignore` for large `data/*.json`
+
+```powershell
+cd c:\Users\tahir\Desktop\Hackathon2026
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
+---
+
+### Step 1 — Load offline data feeds
+
+**File:** `src/loaders.py`
+
+- [ ] **1.1** Load CISA KEV JSON → `set` of CVE IDs (`cveID` field)
+- [ ] **1.2** Load EPSS CSV → `dict[cve_id] → {epss, percentile}`
+- [ ] **1.3** Load NVD year JSON (e.g. `CVE-2025.json`) — keep in memory or lazy iterator
+- [ ] **1.4** Smoke-test each loader: print counts (KEV size, EPSS rows, NVD CVE count)
+- [ ] **1.5** Inspect one NVD record manually — note paths for `id`, `metrics`, `configurations`, CPE `criteria`
 
 ```python
-# KEV → set
-kev_ids = {item["cveID"] for item in kev_json["vulnerabilities"]}
-
-# EPSS → dict
-epss_by_cve = {
-    row["cve"]: {"epss": float(row["epss"]), "percentile": float(row["percentile"])}
-    for row in epss_csv
-}
-
-# NVD — single year in memory; extract CPEs from configurations per CVE
+kev_ids = {v["cveID"] for v in data["vulnerabilities"]}
+epss_by_cve = {row["cve"]: float(row["epss"]) for row in epss_rows}
 ```
 
-**Pre-event checklist**
-
-- [ ] Confirm which year files are on shared drive (`CVE-2024.json`, `CVE-2025.json`)
-- [ ] Decompress `.xz` NVD files if needed (`xz -d -k CVE-2025.json.xz`)
-- [ ] Note exact EPSS filename date
-- [ ] Copy `sample_asset_list.txt` and `starter_notebook.ipynb`
-- [ ] Add large `data/*.json` to `.gitignore`
+**Done when:** All three feeds load without errors and sample keys look correct.
 
 ---
 
-## 7. Time-Boxed Build Schedule
+### Step 2 — Parse asset list input
 
-| Time | Phase | Tasks |
-|------|-------|-------|
-| **0:00–0:30** | Setup | Copy data, `pip install`, smoke-load KEV set, EPSS dict, NVD JSON structure |
-| **0:30–1:30** | Normalisation | Build 15–20 mappings; fuzzy function; **test all 12 sample assets** |
-| **1:30–2:30** | Matching | Extract CPEs from NVD; filter by normalised vendor:product per asset |
-| **2:30–3:30** | Enrichment | Merge EPSS; KEV flag; sort KEV first, then EPSS desc, CVSS tie-break |
-| **3:30–4:30** | Output | Risk templates; CSV; console table; warn on unmapped assets |
-| **4:30–5:30** | Demo prep | Full sample run; fix errors; 5-min demo script; stretch if ready |
+**File:** `src/loaders.py` or `translate.py`
 
-> **Critical path:** Normalisation must handle ≥10 of 12 sample products before investing in matching polish.
+- [ ] **2.1** Read `sample_asset_list.txt` (one product per line)
+- [ ] **2.2** Parse each line into `{name, version, raw_line}` (handle tab/comma/plain text)
+- [ ] **2.3** Return list of asset dicts for downstream steps
+
+**Done when:** 12 sample assets parse into structured records.
 
 ---
 
-## 8. Normalisation Dictionary
+### Step 3 — Build normalisation dictionary
 
-### Sample asset list (facilitator test set)
+**File:** `config/normalisation_map.json`
 
-| Product name (as supplied) | Version | Target CPE (vendor:product) |
-|----------------------------|---------|------------------------------|
+- [ ] **3.1** Create entries: `aliases[]` → `vendor`, `product`, `display_name`
+- [ ] **3.2** Map all 12 facilitator sample products (table below)
+- [ ] **3.3** Add 3–8 extra SMB aliases to reach 15–20 products (Office 365, M365, Firefox, etc.)
+- [ ] **3.4** Verify `vendor:product` strings against CPE dictionary (spot lookups only — do not load full XML)
+
+| Sample product | Version | CPE target |
+|----------------|---------|------------|
 | Microsoft 365 Apps for Business | Current | `microsoft:365_apps` |
 | Windows Server 2022 | 21H2 | `microsoft:windows_server_2022` |
 | Windows 10 Pro | 22H2 | `microsoft:windows_10` |
@@ -206,163 +148,190 @@ epss_by_cve = {
 | WordPress | 6.4 | `wordpress:wordpress` |
 | Moodle | 4.3 | `moodle:moodle` |
 
-### Normalisation function behaviour
-
-1. Parse asset line → `name`, `version`, `raw_line`
-2. Strip/normalise text (lowercase, trim version tokens for matching)
-3. Exact match on alias keys in `normalisation_map.json`
-4. Else `rapidfuzz.process.extractOne` on all aliases (threshold ~85)
-5. Return `(user_label, vendor, product, confidence)`; log low-confidence matches
-
-### Additional SMB aliases to include (reach 15–20)
-
-Examples: `Office 365`, `M365`, `Windows Server 2019`, `Exchange`, `Teams`, `Firefox`, `Node.js`, `PostgreSQL`, `MySQL`, `nginx`, `PuTTY`, `7-Zip`, `Notepad++`
-
-Use CPE dictionary XML for **spot lookups only** when verifying vendor:product strings.
+**Done when:** JSON has ≥15 products and every sample row has a matching alias.
 
 ---
 
-## 9. CVE Matching (MVP)
+### Step 4 — Implement normalisation function
 
-**Rule:** A CVE matches an asset if any CPE in its NVD `configurations` contains the normalised `vendor:product` substring (version ignored for core build).
+**File:** `src/normalise.py`
 
-1. Implement `extract_cpes(cve_record)` — defensive parsing for nested `nodes` / `cpeMatch` / `criteria`
-2. For each normalised asset, collect matching CVE IDs
-3. Deduplicate; record which user asset(s) triggered each CVE
-4. Optional: prefer `application` CPE type; filter obvious hardware-only noise
+- [ ] **4.1** Load `normalisation_map.json`
+- [ ] **4.2** Normalise input text (lowercase, strip punctuation/extra whitespace)
+- [ ] **4.3** Try exact match on alias keys first
+- [ ] **4.4** Fall back to `rapidfuzz` best match (threshold ~85)
+- [ ] **4.5** Return `{user_label, vendor, product, confidence}` per asset
+- [ ] **4.6** Collect unmapped assets into a warning list
 
-**Performance:** Pre-filter NVD by vendor list from normalised assets if full scan is slow.
+- [ ] **4.7** Test: run all 12 sample lines — **≥10 must map correctly before Step 5**
+
+**Done when:** Sample list normalises with expected `vendor:product` for each known product.
 
 ---
 
-## 10. Ranking & Risk Summaries
+### Step 5 — Extract CPEs from NVD records
 
-### Sort order
+**File:** `src/match.py`
 
-1. `KEV == yes` (top)
-2. `EPSS` descending
-3. `CVSS` descending (tie-break)
+- [ ] **5.1** Write `extract_cpes(cve_record)` — walk `configurations` → `nodes` → `cpeMatch` → `criteria`
+- [ ] **5.2** Handle missing/malformed configuration blocks gracefully
+- [ ] **5.3** Parse CPE string to extract `vendor:product` (from `cpe:2.3:a:vendor:product:...`)
+- [ ] **5.4** Unit-test on 2–3 known CVEs from notebook inspection
 
-Default missing EPSS to `0`. Parse CVSS from first available: `cvssMetricV31` → `V30` → `V2`.
+**Done when:** Given a CVE ID, function returns a list of `vendor:product` strings.
 
-### Risk sentence template
+---
+
+### Step 6 — Match CVEs to user assets
+
+**File:** `src/match.py`
+
+- [ ] **6.1** Build set of target `vendor:product` from normalised assets
+- [ ] **6.2** Scan NVD records — if any extracted CPE contains target `vendor:product`, record match
+- [ ] **6.3** Attach `affected_asset` (user's original product name)
+- [ ] **6.4** Deduplicate by CVE ID (one row can list multiple assets if needed)
+- [ ] **6.5** Optional: pre-filter NVD by vendor string for speed
+
+**MVP rule:** Ignore version numbers — substring match on `vendor:product` is enough.
+
+**Done when:** Running on sample assets returns a non-empty, plausible CVE list (not thousands of obvious false positives).
+
+---
+
+### Step 7 — Enrich matches with CVSS, EPSS, KEV
+
+**File:** `src/rank.py` (or extend `match.py`)
+
+- [ ] **7.1** For each matched CVE, lookup EPSS (default `0` if missing)
+- [ ] **7.2** Set `kev = cve_id in kev_ids`
+- [ ] **7.3** Parse CVSS from NVD metrics (`cvssMetricV31` → `V30` → `V2`, first available `baseScore`)
+
+**Done when:** Each match row has `cve_id`, `cvss`, `epss`, `kev`, `affected_asset`.
+
+---
+
+### Step 8 — Rank results
+
+**File:** `src/rank.py`
+
+- [ ] **8.1** Sort by: (1) KEV yes first, (2) EPSS descending, (3) CVSS descending
+- [ ] **8.2** Optional: cap output to top N rows for demo readability (e.g. 50)
+
+**Done when:** A known KEV CVE for a sample product appears above higher-EPSS non-KEV rows.
+
+---
+
+### Step 9 — Generate plain-English risk summaries
+
+**File:** `src/summarise.py`
+
+- [ ] **9.1** Map EPSS to label: `<0.10` low, `0.10–0.30` moderate, `>0.30` high
+- [ ] **9.2** Apply template per row:
 
 ```
 CVE-{id} affects {asset}. EPSS {score} indicates {low|moderate|high} exploitation
-probability. {KEV: Actively exploited in the wild (CISA KEV). | Not listed in CISA KEV.}
+probability. {KEV sentence}.
 ```
 
-**EPSS bands (suggested):**
+- [ ] **9.3** KEV sentence: *Actively exploited in the wild (CISA KEV).* vs *Not listed in CISA KEV.*
 
-| EPSS range | Label |
-|------------|-------|
-| &lt; 0.10 | low |
-| 0.10 – 0.30 | moderate |
-| &gt; 0.30 | high |
+**Done when:** Every output row has a one-sentence `risk_summary` a non-expert can read.
 
 ---
 
-## 11. Team Roles (3–5 people)
+### Step 10 — Export output
 
-| Role | Responsibility |
-|------|----------------|
-| Data engineer | Loaders, NVD CPE extraction, performance |
-| Security mapper | `normalisation_map.json`, CPE dictionary lookups, sample tests |
-| Pipeline developer | Match, merge, rank, CSV export |
-| Demo lead | Sample run, slides, limitations narrative |
-| QA (optional) | Edge-case assets, false positive review |
+**File:** `src/export.py`
 
----
+- [ ] **10.1** Build DataFrame / list of dicts with columns:
+  - `cve_id`, `affected_asset`, `cvss`, `epss`, `kev`, `risk_summary`
+- [ ] **10.2** Write `output/prioritised_cves.csv`
+- [ ] **10.3** Print summary table to console (`tabulate`)
+- [ ] **10.4** Print unmapped assets warning if any
 
-## 12. Evaluation Criteria Alignment
-
-| Criterion | Demo proof point |
-|-----------|------------------|
-| Data pipeline | Show successful load of NVD + KEV + EPSS |
-| Normalisation quality | 3 fuzzy inputs → correct CPE; explain hardest step |
-| Matching accuracy | Spot-check one product; discuss false positives |
-| Prioritisation | KEV row above higher-EPSS non-KEV when applicable |
-| Output clarity | Non-expert can act on one risk sentence |
-| Limitations | Silent misses, EPSS/KEV semantics, NVD gaps |
+**Done when:** CSV opens cleanly and columns match MVP requirements.
 
 ---
 
-## 13. 5-Minute Demo Script
+### Step 11 — Wire CLI entrypoint
 
-1. **Problem** (30s) — CVE firehose vs SMB reality
-2. **Pipeline** (60s) — diagram: assets → normalise → match → rank → CSV
-3. **Live run** (2m) — `sample_asset_list.txt` → top rows in console + CSV
-4. **Design choices** (60s) — normalisation dictionary, KEV-first ranking
-5. **Limitations** (30s) — silent misses, EPSS ≠ safe, no version ranges in MVP
+**File:** `translate.py`
 
----
-
-## 14. Definition of Done
-
-- [ ] `translate.py` runs on `sample_asset_list.txt` without errors
-- [ ] `output/prioritised_cves.csv` with all required columns
-- [ ] `config/normalisation_map.json` with ≥15 products
-- [ ] KEV CVEs appear at top when relevant to stack
-- [ ] Unmapped assets reported in console/output metadata
-- [ ] 5-minute demo rehearsed
-
----
-
-## 15. Day-One Commands
+- [ ] **11.1** Accept asset list path as argument (default: `data/sample_asset_list.txt`)
+- [ ] **11.2** Chain: load feeds → parse assets → normalise → match → enrich → rank → summarise → export
+- [ ] **11.3** Add configurable paths for data files (args or env)
 
 ```powershell
-cd c:\Users\tahir\Desktop\Hackathon2026
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-# Copy event data files into .\data\
 python translate.py data\sample_asset_list.txt
 ```
 
-### requirements.txt
-
-```
-pandas>=2.0
-rapidfuzz>=3.0
-tabulate>=0.9
-```
+**Done when:** Single command runs end-to-end with no manual steps.
 
 ---
 
-## 16. Key Terminology Reference
+### Step 12 — Test and fix
 
-| Term | Definition |
-|------|------------|
-| **CVE** | Common Vulnerability and Exposure identifier |
-| **NVD** | National Vulnerability Database — severity, CPEs, references |
-| **CPE** | Common Platform Enumeration — structured product/version IDs |
-| **CVSS** | Severity score 0–10 (≥9 critical) |
-| **EPSS** | Exploit probability in next 30 days (0–1) |
-| **KEV** | CISA catalogue of confirmed in-the-wild exploitation |
-| **Normalisation** | Informal name → canonical CPE vendor:product |
-| **Fuzzy matching** | Near-string match for alias resolution |
+- [ ] **12.1** Full run on `sample_asset_list.txt`
+- [ ] **12.2** Spot-check 1–2 CVEs manually (relevant product? reasonable CVSS?)
+- [ ] **12.3** Confirm KEV-flagged items surface at top when present
+- [ ] **12.4** Fix crashes, empty output, and wrong normalisation mappings
+- [ ] **12.5** Document known limitations for demo (silent misses, EPSS ≠ safe, no version matching)
+
+**Done when:** Script completes without errors and output is demo-ready.
 
 ---
 
-## 17. Risks & Mitigations
+### Step 13 — Demo preparation (5 minutes)
 
-| Risk | Mitigation |
-|------|------------|
-| Variable NVD JSON shape | Inspect one CVE in Hour 1; defensive `extract_cpes()` |
-| Slow full NVD scan | Filter by vendor list first; cap demo output to top N |
-| Over-scoping | Skip version ranges and UI until CSV works |
-| Silent normalisation failure | Print unmapped assets; test 12 sample lines early |
-| Large repo / git | `.gitignore` for `data/*.json` |
+- [ ] **13.1** Rehearse: problem → pipeline → live run → top 3 results → limitations
+- [ ] **13.2** Prepare to show normalisation (hardest step) with one good and one fuzzy example
+- [ ] **13.3** Have `prioritised_cves.csv` and console output ready
 
 ---
 
-## 18. Next Steps (pre-hackathon)
+## Stretch steps (only after Step 12 passes)
 
-1. Scaffold `requirements.txt`, `config/normalisation_map.json`, and `src/` modules
-2. Implement loaders against placeholder/small JSON samples
-3. Rehearse normalisation tests against Section 10 sample list
-4. On event day: drop real data files into `data/` and run full pipeline
+| Step | Task |
+|------|------|
+| S1 | Combined urgency score: `f(cvss, epss)` |
+| S2 | Version range matching on CPE version fields |
+| S3 | One-page HTML/Markdown executive brief |
+| S4 | Flask or static HTML UI uploading asset list |
+| S5 | CLI flags for year file, output path, max rows |
 
 ---
 
-*Plan version: 1.0 — aligned with CSE Connect CyberHack 2026 Project 1 guide v01*
+## Data files reference
+
+| File | Purpose |
+|------|---------|
+| `CVE-2025.json` | NVD CVE records (CPE, CVSS, descriptions) |
+| `known_exploited_vulnerabilities.json` | CISA KEV — exploited CVE IDs |
+| `epss_scores-*.csv` | Daily EPSS scores |
+| `official-cpe-dictionary_v2.3.xml` | Reference for alias verification only |
+| `sample_asset_list.txt` | Facilitator test input |
+
+---
+
+## Definition of done
+
+- [ ] Steps 0–12 complete
+- [ ] `translate.py` runs on sample asset list without errors
+- [ ] `output/prioritised_cves.csv` has all required columns
+- [ ] `normalisation_map.json` has ≥15 products
+- [ ] ≥10 of 12 sample products normalise correctly
+- [ ] KEV entries ranked above non-KEV when both exist
+- [ ] Demo rehearsed with limitations explained
+
+---
+
+## Limitations to state in demo
+
+1. Wrong product mapping → CVE never appears (silent miss)
+2. Low EPSS ≠ safe — only means lower predicted exploitation
+3. Absence from KEV ≠ unexploited — may be unconfirmed
+4. MVP does not match version ranges — may over-include CVEs
+
+---
+
+*Plan version: 1.1 — step-based implementation guide*
