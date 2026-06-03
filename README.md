@@ -9,6 +9,7 @@ python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 python scripts/download_datasets.py   # first time only
+python scripts/download_datasets.py --cpe   # optional CPE dictionary (~79 MB)
 python translate.py --brief
 pytest
 ```

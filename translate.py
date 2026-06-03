@@ -80,7 +80,7 @@ def main() -> int:
     print("CVE-to-My-Stack Translator\n")
     status = dataset_status()
     print("Dataset status:")
-    for key in ("nvd", "kev", "epss"):
+    for key in ("nvd", "kev", "epss", "cpe"):
         print(f"  {key}: {status[key]}")
     if status["notes"] != "ok":
         print(f"  note: {status['notes']}")

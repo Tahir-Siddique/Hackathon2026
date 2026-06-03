@@ -132,7 +132,7 @@ epss_by_cve = {row["cve"]: float(row["epss"]) for row in epss_rows}
 - [x] **3.1** Create entries: `aliases[]` → `vendor`, `product`, `display_name`
 - [x] **3.2** Map all 12 facilitator sample products (table below)
 - [x] **3.3** Add 3–8 extra SMB aliases to reach 15–20 products (Office 365, M365, Firefox, etc.)
-- [ ] **3.4** Verify `vendor:product` strings against CPE dictionary (spot lookups only — do not load full XML)
+- [x] **3.4** Verify `vendor:product` strings against CPE dictionary (`nvdcpe-2.0.zip` + `scripts/lookup_cpe.py`)
 
 | Sample product | Version | CPE target |
 |----------------|---------|------------|

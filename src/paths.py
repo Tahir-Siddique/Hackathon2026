@@ -45,6 +45,15 @@ def find_epss_csv() -> Path | None:
     return _newest("epss_scores*.csv") or _newest("epss_scores*.csv.gz")
 
 
+def find_cpe_dictionary_zip() -> Path | None:
+    """CPE Dictionary 2.0 zip (replaces retired official-cpe-dictionary_v2.3.xml)."""
+    for name in ("nvdcpe-2.0.zip", "official-cpe-dictionary_v2.3.xml.zip"):
+        path = DATA_DIR / name
+        if path.exists():
+            return path
+    return None
+
+
 def decompress_xz(xz_path: Path) -> Path:
     """Decompress CVE-YYYY.json.xz to CVE-YYYY.json beside the source file."""
     if xz_path.suffix != ".xz":
@@ -100,9 +109,20 @@ def dataset_status() -> dict[str, str]:
     if NVD_FEEDS_DIR.exists() and not any(NVD_FEEDS_DIR.glob("CVE-*.json*")):
         extra.append("nvd-json-data-feeds/ clone in progress or empty")
 
+    cpe = find_cpe_dictionary_zip()
+    legacy_xml = DATA_DIR / "official-cpe-dictionary_v2.3.xml"
+    if legacy_xml.exists():
+        cpe_status = f"ready (legacy XML {legacy_xml.name})"
+    elif cpe:
+        size_mb = cpe.stat().st_size / (1024 * 1024)
+        cpe_status = f"ready ({cpe.name}, {size_mb:.0f} MB) — CPE 2.0 JSON chunks"
+    else:
+        cpe_status = "optional — run: python scripts/download_datasets.py --cpe"
+
     return {
         "nvd": nvd_status,
         "kev": f"ready ({kev.name})" if kev else "missing — download CISA KEV JSON",
         "epss": f"ready ({epss.name})" if epss else "missing — download epss_scores-*.csv",
+        "cpe": cpe_status,
         "notes": "; ".join(extra) if extra else "ok",
     }

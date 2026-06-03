@@ -19,6 +19,9 @@ data/epss_scores*.csv
 data/epss_scores*.csv.gz
 data/known_exploited_vulnerabilities.json
 data/official-cpe-dictionary*.xml
+data/nvdcpe-2.0.zip
+data/nvdcpe-2.0-chunks/
+data/cpe/
 data/nvdcve-*.zip
 data/nvd-json-data-feeds/
 

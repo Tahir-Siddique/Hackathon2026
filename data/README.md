@@ -33,13 +33,20 @@ Re-download with overwrite:
 
 EPSS for “today” may return 403 until published; the script tries the last 14 days.
 
+CPE dictionary only (~79 MB):
+
+```powershell
+python scripts/download_datasets.py --cpe
+python scripts/lookup_cpe.py "google chrome"
+```
+
 ## Optional / not used by default
 
 | File | Notes |
 |------|-------|
 | `nvdcve-2.0-modified.json.zip` | Official NVD 2.0 bulk — different JSON schema |
 | `nvd-json-data-feeds/` | Full git repo — not needed if `.xz` releases are in `data/` |
-| `official-cpe-dictionary_v2.3.xml` | Reference for building normalisation map only |
+| `nvdcpe-2.0.zip` | **CPE Dictionary 2.0** — replaces retired `official-cpe-dictionary_v2.3.xml` ([details](CPE_DICTIONARY.md)) |
 
 ## Decompress NVD only
 

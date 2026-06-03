@@ -22,6 +22,8 @@ FKIE_CVE_2024_URL = (
     "https://github.com/fkie-cad/nvd-json-data-feeds/releases/latest/download/CVE-2024.json.xz"
 )
 EPSS_URL_TEMPLATE = "https://epss.empiricalsecurity.com/epss_scores-{date}.csv.gz"
+# NVD CPE Dictionary 2.0 (replaces retired official-cpe-dictionary_v2.3.xml)
+CPE_DICTIONARY_20_ZIP_URL = "https://nvd.nist.gov/feeds/json/cpe/2.0/nvdcpe-2.0.zip"
 
 
 def download(url: str, dest: Path, force: bool = False) -> None:
@@ -69,9 +71,22 @@ def download_epss(days_back: int = 14) -> Path:
     raise RuntimeError(f"No EPSS file found in the last {days_back} days")
 
 
+def download_cpe_dictionary(force: bool = False) -> Path:
+    dest = DATA_DIR / "nvdcpe-2.0.zip"
+    download(CPE_DICTIONARY_20_ZIP_URL, dest, force=force)
+    return dest
+
+
 def main() -> None:
     force = "--force" in sys.argv
+    cpe_only = "--cpe" in sys.argv
     DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+    if cpe_only:
+        print("=== CPE Dictionary 2.0 (replaces legacy XML) ===")
+        download_cpe_dictionary(force=force)
+        print("\nSpot-check: python scripts/lookup_cpe.py \"microsoft 365\"")
+        return
 
     print("=== CISA KEV ===")
     download(KEV_URL, DATA_DIR / "known_exploited_vulnerabilities.json", force=force)
@@ -104,6 +119,17 @@ def main() -> None:
             print(f"\n=== Decompress {xz.name} ===")
             out = decompress_xz(xz)
             print(f"  wrote: {out.name} ({out.stat().st_size / (1024**2):.1f} MB)")
+
+    print("\n=== CPE Dictionary 2.0 (optional, ~79 MB) ===")
+    cpe_zip = DATA_DIR / "nvdcpe-2.0.zip"
+    if cpe_zip.exists() and not force:
+        print(f"  skip (exists): {cpe_zip.name}")
+    else:
+        try:
+            download_cpe_dictionary(force=force)
+        except Exception as e:
+            print(f"  warning: CPE download failed ({e})")
+            print("  retry later: python scripts/download_datasets.py --cpe")
 
     print("\n=== Done ===")
     from src.paths import dataset_status
