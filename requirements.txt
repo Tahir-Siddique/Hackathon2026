@@ -1,0 +1,10 @@
+pandas>=2.0
+rapidfuzz>=3.0
+tabulate>=0.9
+
+# Notebook (hackathon demo / exploration)
+jupyter>=1.0
+ipykernel>=6.0
+
+# Tests
+pytest>=8.0

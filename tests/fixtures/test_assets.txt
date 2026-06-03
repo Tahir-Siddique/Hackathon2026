@@ -1,0 +1,4 @@
+Google Chrome	Latest
+Windows 10 Pro	22H2
+OpenSSL	3.0.7
+Unknown Product XYZ	1.0

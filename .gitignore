@@ -1,0 +1,33 @@
+# Virtual environment
+.venv/
+venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.pytest_cache
+htmlcov/
+.coverage
+.mypy_cache/
+
+# Large offline data feeds (copy locally from event drive)
+data/CVE-*.json
+data/CVE-*.json.xz
+data/epss_scores*.csv
+data/epss_scores*.csv.gz
+data/known_exploited_vulnerabilities.json
+data/official-cpe-dictionary*.xml
+data/nvdcve-*.zip
+data/nvd-json-data-feeds/
+
+# Generated output
+output/*.csv
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+Thumbs.db
+.DS_Store

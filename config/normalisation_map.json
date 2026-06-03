@@ -1,0 +1,144 @@
+{
+  "products": [
+    {
+      "display_name": "Microsoft 365 Apps",
+      "vendor": "microsoft",
+      "product": "365_apps",
+      "aliases": [
+        "microsoft 365 apps for business",
+        "microsoft 365 apps",
+        "office 365",
+        "office 365 business",
+        "m365",
+        "microsoft office 365"
+      ]
+    },
+    {
+      "display_name": "Windows Server 2022",
+      "vendor": "microsoft",
+      "product": "windows_server_2022",
+      "aliases": [
+        "windows server 2022",
+        "win server 2022",
+        "microsoft windows server 2022"
+      ]
+    },
+    {
+      "display_name": "Windows Server 2019",
+      "vendor": "microsoft",
+      "product": "windows_server_2019",
+      "aliases": ["windows server 2019", "win server 2019"]
+    },
+    {
+      "display_name": "Windows 10",
+      "vendor": "microsoft",
+      "product": "windows_10",
+      "aliases": [
+        "windows 10 pro",
+        "windows 10",
+        "win 10",
+        "microsoft windows 10"
+      ]
+    },
+    {
+      "display_name": "Adobe Acrobat Reader",
+      "vendor": "adobe",
+      "product": "acrobat_reader",
+      "aliases": [
+        "adobe acrobat reader dc",
+        "adobe acrobat reader",
+        "acrobat reader dc",
+        "acrobat reader"
+      ]
+    },
+    {
+      "display_name": "Cisco IOS XE",
+      "vendor": "cisco",
+      "product": "ios_xe",
+      "aliases": ["cisco ios xe", "ios xe", "cisco ios"]
+    },
+    {
+      "display_name": "VMware vSphere",
+      "vendor": "vmware",
+      "product": "vsphere",
+      "aliases": ["vmware vsphere", "vsphere"]
+    },
+    {
+      "display_name": "Google Chrome",
+      "vendor": "google",
+      "product": "chrome",
+      "aliases": ["google chrome", "chrome browser", "chrome"]
+    },
+    {
+      "display_name": "Mozilla Firefox",
+      "vendor": "mozilla",
+      "product": "firefox",
+      "aliases": ["firefox", "mozilla firefox"]
+    },
+    {
+      "display_name": "OpenSSL",
+      "vendor": "openssl",
+      "product": "openssl",
+      "aliases": ["openssl"]
+    },
+    {
+      "display_name": "Apache HTTP Server",
+      "vendor": "apache",
+      "product": "http_server",
+      "aliases": [
+        "apache http server",
+        "apache httpd",
+        "httpd",
+        "apache web server"
+      ]
+    },
+    {
+      "display_name": "Zoom",
+      "vendor": "zoom",
+      "product": "zoom",
+      "aliases": ["zoom client", "zoom meetings", "zoom"]
+    },
+    {
+      "display_name": "WordPress",
+      "vendor": "wordpress",
+      "product": "wordpress",
+      "aliases": ["wordpress cms", "wordpress"]
+    },
+    {
+      "display_name": "Moodle",
+      "vendor": "moodle",
+      "product": "moodle",
+      "aliases": ["moodle lms", "moodle"]
+    },
+    {
+      "display_name": "Microsoft Exchange",
+      "vendor": "microsoft",
+      "product": "exchange_server",
+      "aliases": ["exchange server", "microsoft exchange", "exchange"]
+    },
+    {
+      "display_name": "Microsoft Teams",
+      "vendor": "microsoft",
+      "product": "teams",
+      "aliases": ["microsoft teams", "ms teams", "teams"]
+    },
+    {
+      "display_name": "Node.js",
+      "vendor": "nodejs",
+      "product": "node.js",
+      "aliases": ["node.js", "nodejs", "node js"]
+    },
+    {
+      "display_name": "PostgreSQL",
+      "vendor": "postgresql",
+      "product": "postgresql",
+      "aliases": ["postgresql", "postgres"]
+    },
+    {
+      "display_name": "nginx",
+      "vendor": "nginx",
+      "product": "nginx",
+      "aliases": ["nginx", "nginx web server"]
+    }
+  ]
+}

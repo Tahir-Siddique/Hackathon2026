@@ -1,0 +1,110 @@
+{
+  "timestamp": "test",
+  "cve_count": 4,
+  "cve_items": [
+    {
+      "id": "CVE-2025-0001",
+      "descriptions": [{"lang": "en", "value": "Critical Chrome RCE."}],
+      "metrics": {
+        "cvssMetricV31": [
+          {
+            "cvssData": {"baseScore": 9.8, "baseSeverity": "CRITICAL"}
+          }
+        ]
+      },
+      "configurations": [
+        {
+          "nodes": [
+            {
+              "operator": "OR",
+              "cpeMatch": [
+                {
+                  "vulnerable": true,
+                  "criteria": "cpe:2.3:a:google:chrome:*:*:*:*:*:*:*:*"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CVE-2025-0002",
+      "descriptions": [{"lang": "en", "value": "Windows elevation."}],
+      "metrics": {
+        "cvssMetricV31": [
+          {
+            "cvssData": {"baseScore": 7.5, "baseSeverity": "HIGH"}
+          }
+        ]
+      },
+      "configurations": [
+        {
+          "nodes": [
+            {
+              "operator": "OR",
+              "cpeMatch": [
+                {
+                  "vulnerable": true,
+                  "criteria": "cpe:2.3:o:microsoft:windows_10:*:*:*:*:*:*:*:*"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CVE-2025-0003",
+      "descriptions": [{"lang": "en", "value": "OpenSSL buffer issue."}],
+      "metrics": {
+        "cvssMetricV31": [
+          {
+            "cvssData": {"baseScore": 5.0, "baseSeverity": "MEDIUM"}
+          }
+        ]
+      },
+      "configurations": [
+        {
+          "nodes": [
+            {
+              "operator": "OR",
+              "cpeMatch": [
+                {
+                  "vulnerable": true,
+                  "criteria": "cpe:2.3:a:openssl:openssl:3.0.7:*:*:*:*:*:*"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CVE-2025-9999",
+      "descriptions": [{"lang": "en", "value": "Unrelated product."}],
+      "metrics": {
+        "cvssMetricV31": [
+          {
+            "cvssData": {"baseScore": 10.0, "baseSeverity": "CRITICAL"}
+          }
+        ]
+      },
+      "configurations": [
+        {
+          "nodes": [
+            {
+              "operator": "OR",
+              "cpeMatch": [
+                {
+                  "vulnerable": true,
+                  "criteria": "cpe:2.3:a:unknown:other_product:*:*:*:*:*:*:*:*"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

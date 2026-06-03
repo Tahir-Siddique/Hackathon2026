@@ -1,0 +1,24 @@
+{
+  "title": "Test KEV",
+  "catalogVersion": "test",
+  "dateReleased": "2026-06-01",
+  "count": 2,
+  "vulnerabilities": [
+    {
+      "cveID": "CVE-2025-0001",
+      "vendorProject": "Google",
+      "product": "Chrome",
+      "vulnerabilityName": "Test KEV Chrome",
+      "dateAdded": "2026-01-01",
+      "shortDescription": "Test entry."
+    },
+    {
+      "cveID": "CVE-2025-0002",
+      "vendorProject": "Microsoft",
+      "product": "Windows",
+      "vulnerabilityName": "Test KEV Windows",
+      "dateAdded": "2026-01-01",
+      "shortDescription": "Test entry."
+    }
+  ]
+}
