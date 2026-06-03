@@ -27,6 +27,9 @@ data/nvd-json-data-feeds/
 
 # Generated output
 output/*.csv
+ui/output/*.csv
+ui/output/*.md
+ui/output/*.txt
 
 # IDE / OS
 .idea/

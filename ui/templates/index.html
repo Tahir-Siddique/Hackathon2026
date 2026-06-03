@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block title %}Analyse stack — CVE-to-My-Stack{% endblock %}
+
+{% block content %}
+<section class="mb-8">
+  <h1 class="text-2xl font-bold text-slate-900">Translate CVEs to your stack</h1>
+  <p class="mt-2 max-w-2xl text-slate-600">
+    Paste or upload your software asset list. We normalise product names, match offline NVD data,
+    and return a prioritised table with KEV and EPSS signals.
+  </p>
+</section>
+
+{% if errors %}
+<div class="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-800">
+  <p class="font-medium">Could not run analysis</p>
+  <ul class="mt-1 list-inside list-disc text-sm">
+    {% for e in errors %}<li>{{ e }}</li>{% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+<section class="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+  {% for key, label in [('nvd','NVD'),('kev','KEV'),('epss','EPSS'),('cpe','CPE dict')] %}
+  <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">{{ label }}</p>
+    <p class="mt-1 text-sm {% if 'missing' in status[key]|lower %}text-amber-700{% else %}text-emerald-700{% endif %}">
+      {{ status[key] }}
+    </p>
+  </div>
+  {% endfor %}
+</section>
+
+<form action="/analyze" method="post" enctype="multipart/form-data" class="space-y-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+  <div>
+    <label for="assets_text" class="block text-sm font-medium text-slate-700">Asset list</label>
+    <p class="mt-1 text-xs text-slate-500">One product per line — tab or comma between name and version.</p>
+    <textarea
+      id="assets_text"
+      name="assets_text"
+      rows="14"
+      class="mt-2 w-full rounded-lg border border-slate-300 font-mono text-sm shadow-sm focus:border-brand-600 focus:ring-brand-600"
+      placeholder="Microsoft 365 Apps for Business&#9;Current&#10;Windows Server 2022&#9;21H2"
+    >{{ default_assets }}</textarea>
+  </div>
+
+  <div class="grid gap-6 sm:grid-cols-2">
+    <div>
+      <label for="asset_file" class="block text-sm font-medium text-slate-700">Or upload file</label>
+      <input
+        type="file"
+        id="asset_file"
+        name="asset_file"
+        accept=".txt,.csv,.tsv"
+        class="mt-2 block w-full text-sm text-slate-600 file:mr-4 file:rounded-lg file:border-0 file:bg-brand-50 file:px-4 file:py-2 file:text-sm file:font-medium file:text-brand-700 hover:file:bg-brand-100"
+      />
+    </div>
+    <div>
+      <label for="max_rows" class="block text-sm font-medium text-slate-700">Max results</label>
+      <input
+        type="number"
+        id="max_rows"
+        name="max_rows"
+        value="50"
+        min="1"
+        max="500"
+        class="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm shadow-sm focus:border-brand-600 focus:ring-brand-600"
+      />
+    </div>
+  </div>
+
+  <button
+    type="submit"
+    class="w-full rounded-lg bg-brand-600 px-4 py-3 text-sm font-semibold text-white shadow hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-600 focus:ring-offset-2 sm:w-auto"
+  >
+    Analyse stack
+  </button>
+</form>
+
+<p class="mt-4 text-xs text-slate-500">
+  Data path: {{ project_root }}\data · First run may take ~10 seconds while NVD loads.
+</p>
+{% endblock %}

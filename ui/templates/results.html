@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Results — CVE-to-My-Stack{% endblock %}
+
+{% block content %}
+<section class="mb-6 flex flex-wrap items-center justify-between gap-4">
+  <div>
+    <h1 class="text-2xl font-bold text-slate-900">Prioritised CVEs</h1>
+    <p class="mt-1 text-slate-600">
+      Showing top {{ stats.output_row_count }} of {{ stats.raw_match_count }} matches
+      · {{ stats.kev_in_output }} in CISA KEV
+    </p>
+  </div>
+  <div class="flex gap-3">
+    <a href="/" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">← New analysis</a>
+    {% if csv_ready %}
+    <a href="/download/csv" class="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700">Download CSV</a>
+    {% endif %}
+  </div>
+</section>
+
+<section class="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+  <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <p class="text-xs font-semibold uppercase text-slate-500">Assets mapped</p>
+    <p class="text-2xl font-bold text-slate-900">{{ stats.mapped_count }} / {{ stats.asset_count }}</p>
+  </div>
+  <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <p class="text-xs font-semibold uppercase text-slate-500">Unmapped</p>
+    <p class="text-2xl font-bold {% if stats.unmapped_count %}text-amber-600{% else %}text-emerald-600{% endif %}">{{ stats.unmapped_count }}</p>
+  </div>
+  <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <p class="text-xs font-semibold uppercase text-slate-500">NVD records</p>
+    <p class="text-2xl font-bold text-slate-900">{{ stats.nvd_count }}</p>
+  </div>
+  <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+    <p class="text-xs font-semibold uppercase text-slate-500">KEV catalogue</p>
+    <p class="text-2xl font-bold text-slate-900">{{ stats.kev_count }}</p>
+  </div>
+</section>
+
+{% if unmapped %}
+<div class="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900">
+  <p class="font-medium">Unmapped assets (may miss CVEs silently)</p>
+  <ul class="mt-1 list-inside list-disc text-sm">
+    {% for u in unmapped %}<li>{{ u.user_label }}</li>{% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+<details class="mb-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+  <summary class="cursor-pointer text-sm font-medium text-slate-700">Normalisation mapping</summary>
+  <ul class="mt-3 space-y-1 text-sm text-slate-600">
+    {% for m in mapped %}
+    <li><span class="font-mono text-slate-800">{{ m.user_label }}</span> → <span class="text-brand-700">{{ m.cpe_key }}</span> ({{ m.match_method }})</li>
+    {% endfor %}
+  </ul>
+</details>
+
+<div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+  <div class="overflow-x-auto">
+    <table class="min-w-full divide-y divide-slate-200 text-sm">
+      <thead class="bg-slate-50">
+        <tr>
+          <th class="px-4 py-3 text-left font-semibold text-slate-700">CVE</th>
+          <th class="px-4 py-3 text-left font-semibold text-slate-700">Asset</th>
+          <th class="px-4 py-3 text-right font-semibold text-slate-700">CVSS</th>
+          <th class="px-4 py-3 text-right font-semibold text-slate-700">EPSS</th>
+          <th class="px-4 py-3 text-center font-semibold text-slate-700">KEV</th>
+          <th class="px-4 py-3 text-left font-semibold text-slate-700">Risk summary</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for r in rows %}
+        <tr class="hover:bg-slate-50 {% if r.kev == 'yes' %}bg-red-50/40{% endif %}">
+          <td class="whitespace-nowrap px-4 py-3 font-mono text-xs font-medium text-slate-900">{{ r.cve_id }}</td>
+          <td class="max-w-[10rem] truncate px-4 py-3 text-slate-700" title="{{ r.affected_asset }}">{{ r.affected_asset }}</td>
+          <td class="whitespace-nowrap px-4 py-3 text-right text-slate-700">{{ "%.1f"|format(r.cvss) }}</td>
+          <td class="whitespace-nowrap px-4 py-3 text-right text-slate-700">{{ "%.4f"|format(r.epss) }}</td>
+          <td class="px-4 py-3 text-center">
+            {% if r.kev == 'yes' %}
+            <span class="inline-flex rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-800">yes</span>
+            {% else %}
+            <span class="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">no</span>
+            {% endif %}
+          </td>
+          <td class="max-w-md px-4 py-3 text-xs leading-relaxed text-slate-600">{{ r.risk_summary }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

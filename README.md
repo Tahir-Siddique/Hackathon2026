@@ -21,6 +21,15 @@ pytest
 | `output/prioritised_cves.csv` | Ranked CVE table (MVP columns) |
 | `output/executive_brief.md` | One-page summary (`--brief`) |
 
+## Web UI (FastAPI + Jinja + Tailwind)
+
+```powershell
+pip install -r ui/requirements.txt
+uvicorn ui.app.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+Open http://127.0.0.1:8000 — see [ui/README.md](ui/README.md).
+
 ## Docs
 
 - [PLAN.md](PLAN.md) — implementation steps
