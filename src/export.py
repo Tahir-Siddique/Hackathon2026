@@ -11,6 +11,7 @@ from tabulate import tabulate
 OUTPUT_COLUMNS = [
     "cve_id",
     "affected_asset",
+    "criticality",
     "cvss",
     "epss",
     "kev",
@@ -37,6 +38,7 @@ def print_table(rows: list[dict[str, Any]], limit: int = 15) -> None:
             "Asset": (r["affected_asset"][:28] + "…")
             if len(r["affected_asset"]) > 29
             else r["affected_asset"],
+            "Criticality": r.get("criticality", "Unknown"),
             "CVSS": f"{r.get('cvss', 0):.1f}",
             "EPSS": f"{r.get('epss', 0):.4f}",
             "KEV": r.get("kev", "no"),
@@ -81,7 +83,8 @@ def write_brief(
     for i, r in enumerate(top, 1):
         lines.append(
             f"{i}. **{r['cve_id']}** — {r['affected_asset']} "
-            f"(CVSS {r.get('cvss', 0):.1f}, EPSS {r.get('epss', 0):.4f}, KEV {r.get('kev', 'no')})"
+            f"({r.get('criticality', 'Unknown')} · CVSS {r.get('cvss', 0):.1f}, "
+            f"EPSS {r.get('epss', 0):.4f}, KEV {r.get('kev', 'no')})"
         )
         lines.append(f"   - {r.get('risk_summary', '')}")
     lines.extend(

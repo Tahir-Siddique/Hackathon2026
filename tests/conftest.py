@@ -44,7 +44,7 @@ def sample_asset_list_path() -> Path:
 @pytest.fixture
 def has_full_datasets() -> bool:
     return (
-        (DATA_DIR / "CVE-2025.json").exists()
+        any(DATA_DIR.glob("CVE-*.json"))
         and (DATA_DIR / "known_exploited_vulnerabilities.json").exists()
         and any(DATA_DIR.glob("epss_scores-*.csv"))
     )

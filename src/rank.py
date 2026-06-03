@@ -5,6 +5,29 @@ from __future__ import annotations
 from typing import Any
 
 
+def vulnerability_criticality(cvss: float, epss: float, kev: bool) -> str:
+    """
+    Plain-language severity for the output table.
+
+    Uses CVSS bands, elevated when CISA KEV or high EPSS indicate active/high-likelihood
+    exploitation (so a moderate CVSS + KEV row is not labelled only "Medium").
+    """
+    if (
+        cvss >= 9.0
+        or (kev and epss >= 0.5)
+        or (kev and cvss >= 7.0)
+        or (kev and epss >= 0.3)
+    ):
+        return "Critical"
+    if kev or cvss >= 7.0 or epss >= 0.5:
+        return "High"
+    if cvss >= 4.0 or epss >= 0.15:
+        return "Medium"
+    if cvss > 0 or epss > 0:
+        return "Low"
+    return "Unknown"
+
+
 def combined_urgency_score(cvss: float, epss: float, kev: bool) -> float:
     """
     Single urgency rank: weighted CVSS + EPSS, boosted when in KEV.
@@ -41,6 +64,7 @@ def enrich_and_rank(
             {
                 "cve_id": cve_id,
                 "affected_asset": asset,
+                "criticality": vulnerability_criticality(cvss, epss, kev),
                 "cvss": cvss,
                 "epss": epss,
                 "epss_percentile": epss_data.get("percentile", 0.0),

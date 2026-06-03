@@ -1,6 +1,27 @@
 """Tests for src/rank.py."""
 
-from src.rank import combined_urgency_score, enrich_and_rank
+from src.rank import combined_urgency_score, enrich_and_rank, vulnerability_criticality
+
+
+def test_criticality_kev_elevates_moderate_cvss():
+    assert vulnerability_criticality(4.3, 0.57, kev=True) == "Critical"
+
+
+def test_criticality_cvss_only_high():
+    assert vulnerability_criticality(8.0, 0.01, kev=False) == "High"
+
+
+def test_criticality_low_scores():
+    assert vulnerability_criticality(2.0, 0.01, kev=False) == "Low"
+
+
+def test_enrich_includes_criticality():
+    matches = [
+        {"cve_id": "CVE-A", "affected_asset": "Chrome", "cvss": 4.3, "description": ""},
+    ]
+    epss = {"CVE-A": {"epss": 0.57, "percentile": 0.9}}
+    rows = enrich_and_rank(matches, epss, {"CVE-A"}, max_rows=None)
+    assert rows[0]["criticality"] == "Critical"
 
 
 def test_combined_urgency_kev_boost():

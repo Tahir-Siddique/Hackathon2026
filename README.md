@@ -30,6 +30,12 @@ uvicorn ui.app.main:app --reload --host 127.0.0.1 --port 8000
 
 Open http://127.0.0.1:8000 — see [ui/README.md](ui/README.md).
 
+## Presentation (5 min)
+
+- [presentation/SLIDES.md](presentation/SLIDES.md) — Marp slides (export to PDF/PPTX)
+- [presentation/slides.html](presentation/slides.html) — browser slideshow (double-click or local server)
+- [presentation/SPEAKER_NOTES.md](presentation/SPEAKER_NOTES.md) — timing per slide
+
 ## Docs
 
 - [PLAN.md](PLAN.md) — implementation steps

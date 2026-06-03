@@ -149,6 +149,25 @@ async def analyze(
             status_code=400,
         )
 
+    criticality_order = ("Critical", "High", "Medium", "Low", "Unknown")
+    criticality_counts: dict[str, int] = {}
+    asset_counts: dict[str, int] = {}
+    for row in result["rows"]:
+        level = row.get("criticality", "Unknown")
+        criticality_counts[level] = criticality_counts.get(level, 0) + 1
+        asset = row.get("affected_asset", "")
+        if asset:
+            asset_counts[asset] = asset_counts.get(asset, 0) + 1
+    criticality_counts = {
+        k: criticality_counts[k]
+        for k in criticality_order
+        if k in criticality_counts
+    }
+    asset_counts_list = sorted(
+        asset_counts.items(),
+        key=lambda item: (-item[1], item[0].lower()),
+    )
+
     return templates.TemplateResponse(
         request,
         "results.html",
@@ -159,6 +178,8 @@ async def analyze(
             "stats": result["stats"],
             "max_rows": max_rows,
             "csv_ready": LATEST_CSV.exists(),
+            "criticality_counts": criticality_counts,
+            "asset_counts": asset_counts_list,
         },
     )
 

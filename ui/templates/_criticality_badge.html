@@ -1,0 +1,13 @@
+{% macro badge(level) %}
+{% if level == 'Critical' %}
+<span class="inline-flex items-center gap-1 rounded-full bg-red-600 px-2.5 py-0.5 text-xs font-semibold text-white shadow-sm">{{ level }}</span>
+{% elif level == 'High' %}
+<span class="inline-flex items-center gap-1 rounded-full bg-orange-500/15 px-2.5 py-0.5 text-xs font-semibold text-orange-800 ring-1 ring-orange-500/30">{{ level }}</span>
+{% elif level == 'Medium' %}
+<span class="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2.5 py-0.5 text-xs font-semibold text-amber-900 ring-1 ring-amber-500/25">{{ level }}</span>
+{% elif level == 'Low' %}
+<span class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600">{{ level }}</span>
+{% else %}
+<span class="inline-flex rounded-full bg-slate-100 px-2.5 py-0.5 text-xs text-slate-500">{{ level }}</span>
+{% endif %}
+{% endmacro %}

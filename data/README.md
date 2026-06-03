@@ -4,7 +4,8 @@
 
 | File | Purpose |
 |------|---------|
-| `CVE-2025.json` or `CVE-2024.json` | FKIE NVD CVE records (decompressed from `.xz`) |
+| `CVE-2026.json` | **Primary** FKIE NVD year (current; decompressed from `.xz`) |
+| `CVE-2025.json` / `CVE-2024.json` | Optional older years (`--with-2025` / `--with-2024`) |
 | `known_exploited_vulnerabilities.json` | CISA KEV catalogue |
 | `epss_scores-YYYY-MM-DD.csv` | EPSS daily scores |
 | `sample_asset_list.txt` | Test asset list (included) |
@@ -29,7 +30,9 @@ Re-download with overwrite:
 |------|-----|
 | KEV | https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json |
 | EPSS | https://epss.empiricalsecurity.com/epss_scores-YYYY-MM-DD.csv.gz |
-| NVD | https://github.com/fkie-cad/nvd-json-data-feeds/releases/latest/download/CVE-2025.json.xz |
+| NVD | https://github.com/fkie-cad/nvd-json-data-feeds/releases/latest/download/CVE-2026.json.xz |
+
+The [main/CVE-2026](https://github.com/fkie-cad/nvd-json-data-feeds/tree/main/CVE-2026) folder uses **chunked** JSON (not used by our loader). Use the **release** `.json.xz` file above.
 
 EPSS for “today” may return 403 until published; the script tries the last 14 days.
 
@@ -45,7 +48,7 @@ python scripts/lookup_cpe.py "google chrome"
 | File | Notes |
 |------|-------|
 | `nvdcve-2.0-modified.json.zip` | Official NVD 2.0 bulk — different JSON schema |
-| `nvd-json-data-feeds/` | Full git repo — not needed if `.xz` releases are in `data/` |
+| `nvd-json-data-feeds/` | Optional shallow FKIE git clone (`python scripts/download_datasets.py --clone-repo`); release `.xz` in `data/` is enough for the pipeline |
 | `nvdcpe-2.0.zip` | **CPE Dictionary 2.0** — replaces retired `official-cpe-dictionary_v2.3.xml` ([details](CPE_DICTIONARY.md)) |
 
 ## Decompress NVD only

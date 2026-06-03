@@ -4,7 +4,7 @@
 - **Assets mapped:** 12
 - **Assets unmapped:** 0
 - **Prioritised CVEs shown:** 50
-- **KEV (actively exploited) in list:** 30
+- **KEV (actively exploited) in list:** 13
 
 ## Mapped stack
 
@@ -23,26 +23,26 @@
 
 ## Top priorities
 
-1. **CVE-2025-59287** — Windows Server 2022 21H2 (CVSS 9.8, EPSS 0.7270, KEV yes)
-   - CVE-2025-59287 affects Windows Server 2022 21H2. EPSS 0.7270 indicates high exploitation probability. Actively exploited in the wild (CISA KEV).
-2. **CVE-2025-33053** — Windows Server 2022 21H2 (CVSS 8.8, EPSS 0.5028, KEV yes)
-   - CVE-2025-33053 affects Windows Server 2022 21H2. EPSS 0.5028 indicates high exploitation probability. Actively exploited in the wild (CISA KEV).
-3. **CVE-2025-2783** — Google Chrome Latest (CVSS 8.3, EPSS 0.4686, KEV yes)
-   - CVE-2025-2783 affects Google Chrome Latest. EPSS 0.4686 indicates high exploitation probability. Actively exploited in the wild (CISA KEV).
-4. **CVE-2025-33073** — Windows Server 2022 21H2 (CVSS 8.8, EPSS 0.3716, KEV yes)
-   - CVE-2025-33073 affects Windows Server 2022 21H2. EPSS 0.3716 indicates high exploitation probability. Actively exploited in the wild (CISA KEV).
-5. **CVE-2025-26633** — Windows Server 2022 21H2 (CVSS 7.0, EPSS 0.4398, KEV yes)
-   - CVE-2025-26633 affects Windows Server 2022 21H2. EPSS 0.4398 indicates high exploitation probability. Actively exploited in the wild (CISA KEV).
-6. **CVE-2025-30397** — Windows Server 2022 21H2 (CVSS 7.5, EPSS 0.2074, KEV yes)
-   - CVE-2025-30397 affects Windows Server 2022 21H2. EPSS 0.2074 indicates moderate exploitation probability. Actively exploited in the wild (CISA KEV).
-7. **CVE-2025-10585** — Google Chrome Latest (CVSS 9.8, EPSS 0.0154, KEV yes)
-   - CVE-2025-10585 affects Google Chrome Latest. EPSS 0.0154 indicates low exploitation probability. Actively exploited in the wild (CISA KEV).
-8. **CVE-2025-21418** — Windows Server 2022 21H2 (CVSS 7.8, EPSS 0.1327, KEV yes)
-   - CVE-2025-21418 affects Windows Server 2022 21H2. EPSS 0.1327 indicates moderate exploitation probability. Actively exploited in the wild (CISA KEV).
-9. **CVE-2025-5419** — Google Chrome Latest (CVSS 8.8, EPSS 0.0383, KEV yes)
-   - CVE-2025-5419 affects Google Chrome Latest. EPSS 0.0383 indicates low exploitation probability. Actively exploited in the wild (CISA KEV).
-10. **CVE-2025-13223** — Google Chrome Latest (CVSS 8.8, EPSS 0.0280, KEV yes)
-   - CVE-2025-13223 affects Google Chrome Latest. EPSS 0.0280 indicates low exploitation probability. Actively exploited in the wild (CISA KEV).
+1. **CVE-2026-32202** — Windows Server 2022 21H2 (CVSS 4.3, EPSS 0.5682, KEV yes)
+   - CVE-2026-32202 affects Windows Server 2022 21H2. EPSS 0.5682 indicates high exploitation probability. Actively exploited in the wild (CISA KEV).
+2. **CVE-2026-21513** — Windows Server 2022 21H2 (CVSS 8.8, EPSS 0.2496, KEV yes)
+   - CVE-2026-21513 affects Windows Server 2022 21H2. EPSS 0.2496 indicates moderate exploitation probability. Actively exploited in the wild (CISA KEV).
+3. **CVE-2026-2441** — Google Chrome Latest (CVSS 8.8, EPSS 0.2313, KEV yes)
+   - CVE-2026-2441 affects Google Chrome Latest. EPSS 0.2313 indicates moderate exploitation probability. Actively exploited in the wild (CISA KEV).
+4. **CVE-2026-21533** — Windows Server 2022 21H2 (CVSS 7.8, EPSS 0.2020, KEV yes)
+   - CVE-2026-21533 affects Windows Server 2022 21H2. EPSS 0.2020 indicates moderate exploitation probability. Actively exploited in the wild (CISA KEV).
+5. **CVE-2026-21509** — Microsoft 365 Apps for Business Current (CVSS 7.8, EPSS 0.1387, KEV yes)
+   - CVE-2026-21509 affects Microsoft 365 Apps for Business Current. EPSS 0.1387 indicates moderate exploitation probability. Actively exploited in the wild (CISA KEV).
+6. **CVE-2026-21510** — Windows Server 2022 21H2 (CVSS 8.8, EPSS 0.0496, KEV yes)
+   - CVE-2026-21510 affects Windows Server 2022 21H2. EPSS 0.0496 indicates low exploitation probability. Actively exploited in the wild (CISA KEV).
+7. **CVE-2026-3910** — Google Chrome Latest (CVSS 8.8, EPSS 0.0324, KEV yes)
+   - CVE-2026-3910 affects Google Chrome Latest. EPSS 0.0324 indicates low exploitation probability. Actively exploited in the wild (CISA KEV).
+8. **CVE-2026-5281** — Google Chrome Latest (CVSS 8.8, EPSS 0.0065, KEV yes)
+   - CVE-2026-5281 affects Google Chrome Latest. EPSS 0.0065 indicates low exploitation probability. Actively exploited in the wild (CISA KEV).
+9. **CVE-2026-3909** — Google Chrome Latest (CVSS 8.8, EPSS 0.0045, KEV yes)
+   - CVE-2026-3909 affects Google Chrome Latest. EPSS 0.0045 indicates low exploitation probability. Actively exploited in the wild (CISA KEV).
+10. **CVE-2026-21514** — Microsoft 365 Apps for Business Current (CVSS 7.8, EPSS 0.0517, KEV yes)
+   - CVE-2026-21514 affects Microsoft 365 Apps for Business Current. EPSS 0.0517 indicates low exploitation probability. Actively exploited in the wild (CISA KEV).
 
 ## Limitations
 - Wrong product mapping → CVE may be missing silently.

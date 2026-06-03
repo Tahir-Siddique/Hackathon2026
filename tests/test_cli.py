@@ -38,7 +38,7 @@ def test_translate_smoke_with_fixtures(tmp_path):
 
 
 def test_translate_smoke_flag():
-    if not (ROOT / "data" / "CVE-2025.json").exists():
+    if not any((ROOT / "data").glob("CVE-*.json")):
         pytest.skip("Full NVD not present")
     result = subprocess.run(
         [sys.executable, str(ROOT / "translate.py"), "--smoke"],

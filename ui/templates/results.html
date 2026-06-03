@@ -1,88 +1,214 @@
 {% extends "base.html" %}
+{% from "_criticality_badge.html" import badge %}
 {% block title %}Results — CVE-to-My-Stack{% endblock %}
 
 {% block content %}
-<section class="mb-6 flex flex-wrap items-center justify-between gap-4">
+<section class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
   <div>
-    <h1 class="text-2xl font-bold text-slate-900">Prioritised CVEs</h1>
-    <p class="mt-1 text-slate-600">
-      Showing top {{ stats.output_row_count }} of {{ stats.raw_match_count }} matches
-      · {{ stats.kev_in_output }} in CISA KEV
+    <p class="text-sm font-medium text-brand-600">Analysis complete</p>
+    <h1 class="mt-1 text-3xl font-bold tracking-tight text-slate-900">Prioritised CVEs</h1>
+    <p class="mt-2 text-slate-600">
+      Top <strong>{{ stats.output_row_count }}</strong> of <strong>{{ stats.raw_match_count }}</strong> matches
+      · <span class="font-medium text-red-700">{{ stats.kev_in_output }}</span> in CISA KEV
     </p>
   </div>
-  <div class="flex gap-3">
-    <a href="/" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">← New analysis</a>
+  <div class="flex shrink-0 flex-wrap gap-2">
+    <a href="/" class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50">
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+      New analysis
+    </a>
     {% if csv_ready %}
-    <a href="/download/csv" class="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700">Download CSV</a>
+    <a href="/download/csv" class="btn-primary inline-flex items-center gap-1.5 rounded-xl px-4 py-2.5 text-sm font-semibold text-white shadow-lg">
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+      Download CSV
+    </a>
     {% endif %}
   </div>
 </section>
 
-<section class="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-  <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-    <p class="text-xs font-semibold uppercase text-slate-500">Assets mapped</p>
-    <p class="text-2xl font-bold text-slate-900">{{ stats.mapped_count }} / {{ stats.asset_count }}</p>
+<!-- Stats -->
+<section class="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+  <div class="card-hover rounded-xl border border-slate-200/80 bg-white p-5 shadow-sm">
+    <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Assets mapped</p>
+    <p class="mt-2 text-3xl font-bold tabular-nums text-slate-900">{{ stats.mapped_count }}<span class="text-lg font-normal text-slate-400"> / {{ stats.asset_count }}</span></p>
   </div>
-  <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-    <p class="text-xs font-semibold uppercase text-slate-500">Unmapped</p>
-    <p class="text-2xl font-bold {% if stats.unmapped_count %}text-amber-600{% else %}text-emerald-600{% endif %}">{{ stats.unmapped_count }}</p>
+  <div class="card-hover rounded-xl border border-slate-200/80 bg-white p-5 shadow-sm">
+    <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Unmapped</p>
+    <p class="mt-2 text-3xl font-bold tabular-nums {% if stats.unmapped_count %}text-amber-600{% else %}text-emerald-600{% endif %}">{{ stats.unmapped_count }}</p>
   </div>
-  <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-    <p class="text-xs font-semibold uppercase text-slate-500">NVD records</p>
-    <p class="text-2xl font-bold text-slate-900">{{ stats.nvd_count }}</p>
+  <div class="card-hover rounded-xl border border-slate-200/80 bg-white p-5 shadow-sm">
+    <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">NVD records scanned</p>
+    <p class="mt-2 text-3xl font-bold tabular-nums text-slate-900">{{ stats.nvd_count }}</p>
   </div>
-  <div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-    <p class="text-xs font-semibold uppercase text-slate-500">KEV catalogue</p>
-    <p class="text-2xl font-bold text-slate-900">{{ stats.kev_count }}</p>
+  <div class="card-hover rounded-xl border border-red-100 bg-gradient-to-br from-red-50 to-white p-5 shadow-sm">
+    <p class="text-xs font-semibold uppercase tracking-wide text-red-700/80">KEV in this list</p>
+    <p class="mt-2 text-3xl font-bold tabular-nums text-red-700">{{ stats.kev_in_output }}</p>
   </div>
 </section>
 
+<section id="results-filters" class="mb-6 rounded-xl border border-slate-200/80 bg-white p-4 shadow-sm" data-total-rows="{{ stats.output_row_count }}">
+  <div class="flex flex-wrap items-center justify-between gap-2">
+    <h2 class="text-sm font-semibold text-slate-800">Filters</h2>
+    <p id="filter-visible-count" class="text-xs text-slate-500">Showing {{ stats.output_row_count }} of {{ stats.output_row_count }}</p>
+  </div>
+
+  {% if criticality_counts %}
+  <div class="mt-3">
+    <p class="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">Criticality</p>
+    <div class="flex flex-wrap gap-2">
+      <button type="button" data-filter-criticality="all" class="filter-chip active rounded-full border border-slate-200 bg-white px-3 py-1 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50">All</button>
+      {% for level, count in criticality_counts.items() %}
+      <button type="button" data-filter-criticality="{{ level }}" class="filter-chip rounded-full border border-slate-200 bg-white px-3 py-1 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50">{{ level }} ({{ count }})</button>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if asset_counts %}
+  <div class="mt-4">
+    <p class="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">Application</p>
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+      <select
+        id="filter-asset-select"
+        class="w-full max-w-md rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+        aria-label="Filter by application"
+      >
+        <option value="all">All applications ({{ stats.output_row_count }})</option>
+        {% for asset, count in asset_counts %}
+        <option value="{{ asset }}">{{ asset }} ({{ count }})</option>
+        {% endfor %}
+      </select>
+      <div class="asset-chip-scroll flex min-w-0 flex-1 flex-wrap gap-2">
+        <button type="button" data-filter-asset="all" class="filter-asset-chip active rounded-full border border-slate-200 bg-white px-3 py-1 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50">All apps</button>
+        {% for asset, count in asset_counts %}
+        <button
+          type="button"
+          data-filter-asset="{{ asset }}"
+          title="{{ asset }} ({{ count }} CVE{{ 's' if count != 1 else '' }})"
+          class="filter-asset-chip max-w-[11rem] truncate rounded-full border border-slate-200 bg-white px-3 py-1 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
+        >{{ asset }} ({{ count }})</button>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</section>
+
+<details class="mb-6 group rounded-xl border border-slate-200/80 bg-white shadow-sm">
+  <summary class="cursor-pointer list-none px-5 py-4 text-sm font-medium text-slate-700 marker:content-none">
+    <span class="flex items-center justify-between">
+      How ranking works
+      <svg class="h-5 w-5 text-slate-400 transition group-open:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+    </span>
+  </summary>
+  <div class="border-t border-slate-100 px-5 pb-4 text-sm text-slate-600">
+    <ol class="mt-3 list-decimal space-y-1 pl-5">
+      <li><strong>KEV first</strong> — CISA confirmed active exploitation</li>
+      <li><strong>Urgency score</strong> — 40% CVSS + 60% EPSS (+ boost if KEV)</li>
+      <li><strong>EPSS</strong> then <strong>CVSS</strong> as tie-breakers</li>
+    </ol>
+    <p class="mt-3 text-xs text-slate-500">Criticality badge combines CVSS, KEV, and EPSS for plain-language severity.</p>
+  </div>
+</details>
+
 {% if unmapped %}
-<div class="mb-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900">
-  <p class="font-medium">Unmapped assets (may miss CVEs silently)</p>
-  <ul class="mt-1 list-inside list-disc text-sm">
-    {% for u in unmapped %}<li>{{ u.user_label }}</li>{% endfor %}
-  </ul>
+<div class="mb-6 flex gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-4 text-amber-950">
+  <svg class="h-5 w-5 shrink-0 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+  <div>
+    <p class="font-semibold">Unmapped assets</p>
+    <p class="text-sm text-amber-800">These may miss CVEs silently — add aliases to normalisation_map.json</p>
+    <ul class="mt-2 flex flex-wrap gap-2">
+      {% for u in unmapped %}
+      <li class="rounded-lg bg-white/80 px-2 py-1 text-sm font-medium ring-1 ring-amber-200">{{ u.user_label }}</li>
+      {% endfor %}
+    </ul>
+  </div>
 </div>
 {% endif %}
 
-<details class="mb-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-  <summary class="cursor-pointer text-sm font-medium text-slate-700">Normalisation mapping</summary>
-  <ul class="mt-3 space-y-1 text-sm text-slate-600">
+<details class="mb-6 rounded-xl border border-slate-200/80 bg-white shadow-sm">
+  <summary class="cursor-pointer px-5 py-4 text-sm font-medium text-slate-700">Normalisation mapping ({{ mapped|length }} products)</summary>
+  <ul class="max-h-48 space-y-2 overflow-y-auto border-t border-slate-100 px-5 py-4 text-sm">
     {% for m in mapped %}
-    <li><span class="font-mono text-slate-800">{{ m.user_label }}</span> → <span class="text-brand-700">{{ m.cpe_key }}</span> ({{ m.match_method }})</li>
+    <li class="flex flex-wrap items-baseline gap-2">
+      <span class="font-mono text-slate-800">{{ m.user_label }}</span>
+      <span class="text-slate-300">→</span>
+      <span class="font-mono text-brand-700">{{ m.cpe_key }}</span>
+      <span class="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-500">{{ m.match_method }}</span>
+    </li>
     {% endfor %}
   </ul>
 </details>
 
-<div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-  <div class="overflow-x-auto">
-    <table class="min-w-full divide-y divide-slate-200 text-sm">
-      <thead class="bg-slate-50">
-        <tr>
-          <th class="px-4 py-3 text-left font-semibold text-slate-700">CVE</th>
-          <th class="px-4 py-3 text-left font-semibold text-slate-700">Asset</th>
-          <th class="px-4 py-3 text-right font-semibold text-slate-700">CVSS</th>
-          <th class="px-4 py-3 text-right font-semibold text-slate-700">EPSS</th>
-          <th class="px-4 py-3 text-center font-semibold text-slate-700">KEV</th>
-          <th class="px-4 py-3 text-left font-semibold text-slate-700">Risk summary</th>
+<!-- Mobile / narrow: stacked cards (no horizontal table) -->
+<div class="cve-results-cards space-y-3 lg:hidden">
+  {% for r in rows %}
+  <article
+    data-row-criticality="{{ r.criticality }}"
+    data-row-asset="{{ r.affected_asset }}"
+    class="cve-result-row rounded-xl border border-slate-200/80 bg-white p-4 shadow-sm {% if r.kev == 'yes' %}ring-2 ring-red-200 ring-offset-1{% endif %}"
+  >
+    <div class="flex flex-wrap items-start justify-between gap-2">
+      <a href="https://nvd.nist.gov/vuln/detail/{{ r.cve_id }}" target="_blank" rel="noopener" class="font-mono text-sm font-semibold text-brand-700 hover:underline">{{ r.cve_id }}</a>
+      {{ badge(r.criticality) }}
+    </div>
+    <p class="mt-2 text-sm font-medium text-slate-800">{{ r.affected_asset }}</p>
+    <div class="mt-2 flex flex-wrap gap-3 text-xs text-slate-600">
+      <span>CVSS <strong class="text-slate-900">{{ "%.1f"|format(r.cvss) }}</strong></span>
+      <span>EPSS <strong class="text-slate-900">{{ "%.4f"|format(r.epss) }}</strong></span>
+      {% if r.kev == 'yes' %}<span class="font-bold text-red-700">KEV</span>{% endif %}
+    </div>
+    <p class="mt-3 text-xs leading-relaxed text-slate-600">{{ r.risk_summary }}</p>
+  </article>
+  {% endfor %}
+</div>
+
+<!-- Desktop: fixed-width table, text wraps inside cells -->
+<div class="hidden overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-lg shadow-slate-200/40 lg:block">
+  <div class="cve-results-scroll">
+    <table class="cve-results-table text-sm">
+      <colgroup>
+        <col style="width:17%" />
+        <col style="width:15%" />
+        <col style="width:11%" />
+        <col style="width:7%" />
+        <col style="width:8%" />
+        <col style="width:7%" />
+        <col style="width:35%" />
+      </colgroup>
+      <thead class="sticky-thead">
+        <tr class="divide-y divide-slate-200">
+          <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">CVE</th>
+          <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Asset</th>
+          <th class="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-500">Crit.</th>
+          <th class="px-3 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">CVSS</th>
+          <th class="px-3 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">EPSS</th>
+          <th class="px-3 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-500">KEV</th>
+          <th class="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Risk summary</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-slate-100">
         {% for r in rows %}
-        <tr class="hover:bg-slate-50 {% if r.kev == 'yes' %}bg-red-50/40{% endif %}">
-          <td class="whitespace-nowrap px-4 py-3 font-mono text-xs font-medium text-slate-900">{{ r.cve_id }}</td>
-          <td class="max-w-[10rem] truncate px-4 py-3 text-slate-700" title="{{ r.affected_asset }}">{{ r.affected_asset }}</td>
-          <td class="whitespace-nowrap px-4 py-3 text-right text-slate-700">{{ "%.1f"|format(r.cvss) }}</td>
-          <td class="whitespace-nowrap px-4 py-3 text-right text-slate-700">{{ "%.4f"|format(r.epss) }}</td>
-          <td class="px-4 py-3 text-center">
+        <tr
+          data-row-criticality="{{ r.criticality }}"
+          data-row-asset="{{ r.affected_asset }}"
+          class="cve-result-row align-top transition hover:bg-slate-50/80 {% if r.kev == 'yes' %}bg-red-50/30 shadow-[inset_4px_0_0_0_#ef4444]{% endif %}"
+        >
+          <td class="px-3 py-3">
+            <a href="https://nvd.nist.gov/vuln/detail/{{ r.cve_id }}" target="_blank" rel="noopener" class="font-mono text-xs font-medium text-brand-700 hover:underline">{{ r.cve_id }}</a>
+          </td>
+          <td class="px-3 py-3 text-slate-700">{{ r.affected_asset }}</td>
+          <td class="px-3 py-3 text-center">{{ badge(r.criticality) }}</td>
+          <td class="px-3 py-3 text-right font-medium tabular-nums text-slate-800">{{ "%.1f"|format(r.cvss) }}</td>
+          <td class="px-3 py-3 text-right tabular-nums text-slate-700">{{ "%.4f"|format(r.epss) }}</td>
+          <td class="px-3 py-3 text-center">
             {% if r.kev == 'yes' %}
-            <span class="inline-flex rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-800">yes</span>
+            <span class="inline-flex rounded-full bg-red-100 px-2 py-0.5 text-xs font-bold text-red-800">KEV</span>
             {% else %}
-            <span class="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">no</span>
+            <span class="text-xs text-slate-400">—</span>
             {% endif %}
           </td>
-          <td class="max-w-md px-4 py-3 text-xs leading-relaxed text-slate-600">{{ r.risk_summary }}</td>
+          <td class="px-3 py-3 text-xs leading-relaxed text-slate-600">{{ r.risk_summary }}</td>
         </tr>
         {% endfor %}
       </tbody>

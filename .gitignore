@@ -15,6 +15,8 @@ htmlcov/
 # Large offline data feeds (copy locally from event drive)
 data/CVE-*.json
 data/CVE-*.json.xz
+# FKIE full repo clone (optional reference; very large)
+data/nvd-json-data-feeds/
 data/epss_scores*.csv
 data/epss_scores*.csv.gz
 data/known_exploited_vulnerabilities.json
@@ -23,7 +25,6 @@ data/nvdcpe-2.0.zip
 data/nvdcpe-2.0-chunks/
 data/cpe/
 data/nvdcve-*.zip
-data/nvd-json-data-feeds/
 
 # Generated output
 output/*.csv

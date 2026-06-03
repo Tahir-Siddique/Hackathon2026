@@ -16,6 +16,14 @@ def _newest(glob_pattern: str, directory: Path = DATA_DIR) -> Path | None:
     return matches[0] if matches else None
 
 
+def _cve_year_from_path(path: Path) -> int | None:
+    """Parse CVE-YYYY from filename."""
+    stem = path.name.replace(".json.xz", "").replace(".json", "")
+    if stem.startswith("CVE-") and stem[4:].isdigit():
+        return int(stem[4:])
+    return None
+
+
 def find_nvd_cve_json(year: int | None = None) -> Path | None:
     """Find decompressed FKIE-style CVE-YYYY.json (or .xz to decompress later)."""
     if year is not None:
@@ -26,14 +34,16 @@ def find_nvd_cve_json(year: int | None = None) -> Path | None:
                     return path
         return None
 
+    best: Path | None = None
+    best_year = -1
     for directory in (DATA_DIR, NVD_FEEDS_DIR):
-        json_files = sorted(directory.glob("CVE-*.json"), reverse=True)
-        if json_files:
-            return json_files[0]
-        xz_files = sorted(directory.glob("CVE-*.json.xz"), reverse=True)
-        if xz_files:
-            return xz_files[0]
-    return None
+        for pattern in ("CVE-*.json", "CVE-*.json.xz"):
+            for path in directory.glob(pattern):
+                y = _cve_year_from_path(path)
+                if y is not None and y > best_year:
+                    best_year = y
+                    best = path
+    return best
 
 
 def find_kev_json() -> Path | None:
@@ -74,7 +84,7 @@ def resolve_nvd_path(preferred: Path | None = None) -> Path:
         found = find_nvd_cve_json()
         if not found:
             raise FileNotFoundError(
-                "No NVD CVE file found. Add CVE-2025.json or CVE-2024.json.xz under data/ "
+                "No NVD CVE file found. Add CVE-2026.json or CVE-2026.json.xz under data/ "
                 "(see data/README.md)."
             )
         path = found
@@ -106,8 +116,10 @@ def dataset_status() -> dict[str, str]:
     extra = []
     if modified_zip.exists():
         extra.append("nvdcve-2.0-modified.json.zip present (NVD 2.0 bulk — not used by default pipeline)")
-    if NVD_FEEDS_DIR.exists() and not any(NVD_FEEDS_DIR.glob("CVE-*.json*")):
-        extra.append("nvd-json-data-feeds/ clone in progress or empty")
+    if (NVD_FEEDS_DIR / ".git").is_dir():
+        extra.append("nvd-json-data-feeds/ FKIE repo clone present (optional; release JSON in data/ is used)")
+    elif NVD_FEEDS_DIR.exists() and not any(NVD_FEEDS_DIR.glob("CVE-*.json*")):
+        extra.append("nvd-json-data-feeds/ empty — run: python scripts/download_datasets.py --clone-repo")
 
     cpe = find_cpe_dictionary_zip()
     legacy_xml = DATA_DIR / "official-cpe-dictionary_v2.3.xml"

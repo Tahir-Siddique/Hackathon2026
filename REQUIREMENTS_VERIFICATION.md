@@ -61,7 +61,7 @@ Cross-check against **CVE-to-My-Stack Translator Hackathon Project Guide v01** (
 |------------|--------|-------|
 | No external vulnerability APIs at runtime | ✅ | No HTTP in [src/](src/); offline files only |
 | 5.5 h scope / demo-ready | ✅ | Pipeline ~6s on full NVD |
-| Current-year NVD unless needed | ✅ | Default [CVE-2025.json](data/CVE-2025.json); [CVE-2024.json](data/CVE-2024.json) also present |
+| Current-year NVD unless needed | ✅ | Default [CVE-2026.json](data/CVE-2026.json); optional [CVE-2025.json](data/CVE-2025.json), [CVE-2024.json](data/CVE-2024.json) |
 | 15–20 products, not exhaustive | ✅ | 19 products, quality over breadth |
 | No version matching in core MVP | ✅ | By design |
 
@@ -71,7 +71,7 @@ Cross-check against **CVE-to-My-Stack Translator Hackathon Project Guide v01** (
 
 | Feed | Guide file | Your project | Status |
 |------|------------|--------------|--------|
-| NVD CVE | `CVE-2024.json` / `CVE-2025.json` (FKIE) | [data/CVE-2025.json](data/CVE-2025.json), [data/CVE-2024.json](data/CVE-2024.json) | ✅ |
+| NVD CVE | `CVE-YYYY.json` (FKIE release) | [data/CVE-2026.json](data/CVE-2026.json) (primary); older years optional | ✅ |
 | CISA KEV | `known_exploited_vulnerabilities.json` | [data/known_exploited_vulnerabilities.json](data/known_exploited_vulnerabilities.json) | ✅ |
 | EPSS | `epss_scores-[date].csv` | [data/epss_scores-2026-06-02.csv](data/epss_scores-2026-06-02.csv) | ✅ |
 | CPE dictionary | `official-cpe-dictionary_v2.3.xml` | [data/nvdcpe-2.0.zip](data/nvdcpe-2.0.zip) (NIST retired XML Aug 2025) | ✅ Equivalent — [data/CPE_DICTIONARY.md](data/CPE_DICTIONARY.md) |

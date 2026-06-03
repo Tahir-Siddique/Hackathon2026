@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CVE-to-My-Stack — Full deck</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/theme/white.css" />
+  <style>
+    .reveal { font-family: "DM Sans", system-ui, sans-serif; }
+    .reveal h1, .reveal h2, .reveal h3 { color: #1e3a8a; font-weight: 700; }
+    .reveal h1 { font-size: 2em; }
+    .reveal table { font-size: 0.62em; margin: 0.5em auto; border-collapse: collapse; }
+    .reveal th { background: #f1f5f9; }
+    .reveal th, .reveal td { padding: 0.35em 0.6em; border: 1px solid #e2e8f0; }
+    .reveal .muted { color: #64748b; font-size: 0.75em; }
+    .reveal blockquote { border-left: 4px solid #2563eb; padding-left: 1em; font-style: italic; color: #475569; }
+    .reveal pre { background: #0f172a; color: #e2e8f0; padding: 0.6em 1em; border-radius: 8px; font-size: 0.48em; }
+    .reveal code { color: #93c5fd; }
+    .kev-yes { background: #fef2f2; color: #991b1b; font-weight: 700; padding: 0.1em 0.4em; border-radius: 4px; }
+    .badge-crit { background: #dc2626; color: #fff; font-weight: 700; padding: 0.15em 0.5em; border-radius: 999px; font-size: 0.85em; }
+    .badge-high { background: #ffedd5; color: #9a3412; font-weight: 600; padding: 0.15em 0.5em; border-radius: 999px; font-size: 0.85em; }
+    .title-slide { background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #312e81 100%) !important; }
+    .title-slide h1, .title-slide p { color: #fff !important; }
+    .title-slide .muted { color: #bfdbfe !important; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; text-align: left; font-size: 0.75em; }
+    .flow { font-size: 0.7em; letter-spacing: 0.02em; color: #334155; }
+    .flow span { background: #eff6ff; padding: 0.25em 0.5em; border-radius: 6px; margin: 0 0.15em; }
+  </style>
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+      <section class="title-slide" data-background-gradient="linear-gradient(135deg, #0f172a, #1e3a8a)">
+        <h1>CVE-to-My-Stack Translator</h1>
+        <p>Turn thousands of CVEs into a short, prioritised action list</p>
+        <p class="muted">CyberHack 2026 · Python pipeline + Web UI</p>
+        <p class="muted" style="margin-top:2em;">Your name / team · 5-minute demo</p>
+      </section>
+
+      <section>
+        <h2>The problem</h2>
+        <ul>
+          <li><strong>~23,000</strong> CVEs in the 2026 NVD feed alone</li>
+          <li>Small IT teams can't read them all</li>
+          <li>Which CVEs affect <strong>your</strong> stack?</li>
+        </ul>
+        <blockquote>47 CVEs overnight — which 4 matter to us?</blockquote>
+      </section>
+
+      <section>
+        <h2>What we deliver</h2>
+        <table>
+          <tr><th>You provide</th><th>You get</th></tr>
+          <tr><td>Informal asset list</td><td>Top 50 prioritised rows</td></tr>
+          <tr><td>Tab / file / web paste</td><td>Criticality, CVSS, EPSS, KEV, summary</td></tr>
+        </table>
+        <p class="muted">100% offline — CVE-2026.json + CISA KEV + EPSS</p>
+      </section>
+
+      <section>
+        <h2>Pipeline</h2>
+        <p class="flow">
+          <span>Assets</span> → <span>Normalise</span> → <span>Match NVD</span> → <span>EPSS+KEV</span> → <span>Rank</span> → <span>CSV / UI</span>
+        </p>
+        <ul style="font-size:0.75em;text-align:left;margin-top:1.5em;">
+          <li><strong>Normalise</strong> — fuzzy CPE mapping (hardest step)</li>
+          <li><strong>Match</strong> — filter ~23k CVEs to your stack (~6 s)</li>
+          <li><strong>Rank</strong> — KEV first, then urgency / EPSS / CVSS</li>
+          <li><strong>Criticality</strong> — plain-English severity badge</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Offline data</h2>
+        <table>
+          <tr><th>Feed</th><th>Source</th></tr>
+          <tr><td>NVD</td><td>CVE-2026.json (~22.7k CVEs)</td></tr>
+          <tr><td>KEV</td><td>CISA known exploited catalogue</td></tr>
+          <tr><td>EPSS</td><td>Daily exploitation probability scores</td></tr>
+          <tr><td>CPE</td><td>nvdcpe-2.0.zip (map building)</td></tr>
+        </table>
+        <p class="muted"><code>python scripts/download_datasets.py</code></p>
+      </section>
+
+      <section>
+        <h2>Normalisation</h2>
+        <ul style="font-size:0.8em;">
+          <li>20 products in <code>normalisation_map.json</code> + rapidfuzz</li>
+          <li>Facilitator sample: <strong>12 / 12 mapped</strong></li>
+          <li>Wrong alias → CVE <strong>silently missing</strong></li>
+          <li>No version-range matching (MVP)</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Ranking &amp; criticality</h2>
+        <div class="two-col">
+          <div>
+            <h3 style="font-size:0.9em;color:#2563eb;">Sort order</h3>
+            <ol style="font-size:0.7em;">
+              <li>KEV (yes first)</li>
+              <li>Urgency: 40% CVSS + 60% EPSS (+KEV boost)</li>
+              <li>EPSS → CVSS</li>
+            </ol>
+          </div>
+          <div>
+            <h3 style="font-size:0.9em;color:#2563eb;">Criticality badge</h3>
+            <p style="font-size:0.65em;"><span class="badge-crit">Critical</span> KEV + high EPSS or CVSS ≥ 9</p>
+            <p style="font-size:0.65em;"><span class="badge-high">High</span> KEV or CVSS ≥ 7 or EPSS ≥ 0.5</p>
+            <p style="font-size:0.65em;">Medium / Low — lower scores</p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Web UI</h2>
+        <p style="font-size:0.75em;"><code>http://127.0.0.1:8000</code></p>
+        <ul style="font-size:0.72em;">
+          <li>Paste / upload assets · load sample list</li>
+          <li>Dataset status · criticality filters</li>
+          <li>Download CSV · NVD links per CVE</li>
+        </ul>
+        <pre style="margin-top:0.8em;"><code>uvicorn ui.app.main:app --reload --host 127.0.0.1 --port 8000</code></pre>
+      </section>
+
+      <section>
+        <h2>Live demo</h2>
+        <pre><code>python translate.py data/sample_asset_list.txt --brief</code></pre>
+        <ul style="font-size:0.72em;">
+          <li>12 assets mapped · ~996 matches</li>
+          <li>Top 50 rows · <strong>13 KEV</strong> in list</li>
+          <li>CSV + executive brief</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Sample output</h2>
+        <table>
+          <tr><th>CVE</th><th>Asset</th><th>Crit.</th><th>EPSS</th><th>KEV</th></tr>
+          <tr>
+            <td>CVE-2026-32202</td>
+            <td>Windows Server 2022</td>
+            <td><span class="badge-crit">Critical</span></td>
+            <td>0.57</td>
+            <td class="kev-yes">yes</td>
+          </tr>
+          <tr>
+            <td>CVE-2026-2441</td>
+            <td>Google Chrome</td>
+            <td><span class="badge-high">High</span></td>
+            <td>0.23</td>
+            <td class="kev-yes">yes</td>
+          </tr>
+        </table>
+        <p class="muted" style="margin-top:0.8em;">Read one risk_summary aloud for the judges</p>
+      </section>
+
+      <section>
+        <h2>Use cases</h2>
+        <ul style="font-size:0.8em;">
+          <li><strong>SMB sysadmin</strong> — patch Critical / KEV first</li>
+          <li><strong>School / uni</strong> — weekly CSV for management</li>
+          <li><strong>Charity volunteer</strong> — plain English summaries</li>
+        </ul>
+        <p style="font-size:0.7em;margin-top:1em;">44 pytest tests · CLI · notebook · web UI</p>
+      </section>
+
+      <section>
+        <h2>Limits &amp; design</h2>
+        <ul style="font-size:0.78em;">
+          <li>KEV + EPSS ranking · ~6 s NVD scan</li>
+          <li>Bad mapping → missed CVE</li>
+          <li>Low EPSS ≠ safe · Not in KEV ≠ unexploited</li>
+          <li>No version-range matching (MVP)</li>
+        </ul>
+      </section>
+
+      <section class="title-slide">
+        <h1>Thank you</h1>
+        <p>Questions?</p>
+        <p class="muted" style="margin-top:1.5em;">translate.py · ui/ · DEMO.md</p>
+      </section>
+
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+  <script>
+    Reveal.initialize({
+      hash: true,
+      transition: "slide",
+      width: 1280,
+      height: 720,
+      margin: 0.08,
+    });
+  </script>
+</body>
+</html>

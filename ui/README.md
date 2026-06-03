@@ -11,7 +11,7 @@ From the **repository root** (`Hackathon2026/`):
 pip install -r ui\requirements.txt
 ```
 
-Ensure parent data feeds exist (`data/CVE-2025.json`, KEV, EPSS) — see `../data/README.md`.
+Ensure parent data feeds exist (`data/CVE-2026.json`, KEV, EPSS) — see `../data/README.md`.
 
 ## Run
 

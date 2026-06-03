@@ -88,7 +88,7 @@ flowchart TB
 ```mermaid
 flowchart LR
   subgraph data [data/ folder]
-    NVD[(CVE-2025.json<br/>FKIE NVD)]
+    NVD[(CVE-2026.json<br/>FKIE NVD)]
     KEV[(known_exploited_<br/>vulnerabilities.json)]
     EPSS[(epss_scores-*.csv)]
     CPE[(nvdcpe-2.0.zip<br/>reference only)]
@@ -265,7 +265,7 @@ Paths are relative to [Hackathon2026/](.). In Cursor/VS Code, **Ctrl+Click** a l
 
 | Feed | Local file | Upstream |
 |------|------------|----------|
-| NVD CVEs | [data/CVE-2025.json](data/CVE-2025.json) | [FKIE nvd-json-data-feeds](https://github.com/fkie-cad/nvd-json-data-feeds/releases) |
+| NVD CVEs | [data/CVE-2026.json](data/CVE-2026.json) | [FKIE nvd-json-data-feeds](https://github.com/fkie-cad/nvd-json-data-feeds/releases) |
 | CISA KEV | [data/known_exploited_vulnerabilities.json](data/known_exploited_vulnerabilities.json) | [CISA KEV JSON](https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json) |
 | EPSS | [data/epss_scores-2026-06-02.csv](data/epss_scores-2026-06-02.csv) | [EPSS daily scores](https://epss.empiricalsecurity.com/) |
 | CPE dict | [data/nvdcpe-2.0.zip](data/nvdcpe-2.0.zip) | [NVD CPE Dictionary 2.0](https://nvd.nist.gov/vuln/data-feeds) |
@@ -472,12 +472,22 @@ Open http://127.0.0.1:8000 · Templates: [ui/templates/index.html](ui/templates/
 
 ---
 
-## Slide deck tip
+## Slide decks
 
-Export diagrams for PowerPoint:
+| Deck | Use |
+|------|-----|
+| **[presentation/DEMO_SLIDES.md](presentation/DEMO_SLIDES.md)** | **Full conversion of this guide** (Marp → PPTX/PDF, ~20 slides) |
+| [presentation/SLIDES.md](presentation/SLIDES.md) | Short **4-minute** deck (7 slides) |
+| [presentation/slides.html](presentation/slides.html) | Browser presenter |
+| [presentation/SPEAKER_NOTES.md](presentation/SPEAKER_NOTES.md) | Timing + script |
 
-1. Open this file in VS Code / Cursor with a Mermaid preview extension, or paste diagrams into [mermaid.live](https://mermaid.live) and export PNG/SVG.
-2. Use **Diagram §1** (context) on slide 2, **§2** (data flow) on slide 3, **§5** (normalisation) when discussing the hardest step, **§6** (ranking) before showing CSV.
+```powershell
+cd presentation
+npx @marp-team/marp-cli DEMO_SLIDES.md --pptx -o CVE-to-My-Stack-DEMO.pptx --no-stdin
+npx @marp-team/marp-cli SLIDES.md --pptx -o CVE-to-My-Stack-4min.pptx --no-stdin
+```
+
+Export diagrams for PowerPoint if Mermaid fails in Marp: [mermaid.live](https://mermaid.live) + diagrams in this file.
 
 ---
 

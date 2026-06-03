@@ -1,39 +1,62 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full">
+<html lang="en" class="h-full scroll-smooth">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{% block title %}CVE-to-My-Stack{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
       theme: {
         extend: {
+          fontFamily: {
+            sans: ['"DM Sans"', 'system-ui', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
+          },
           colors: {
-            brand: { 50: '#eff6ff', 600: '#2563eb', 700: '#1d4ed8', 900: '#1e3a8a' }
-          }
-        }
-      }
-    }
+            brand: {
+              50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6',
+              600: '#2563eb', 700: '#1d4ed8', 800: '#1e40af', 900: '#1e3a8a',
+            },
+          },
+        },
+      },
+    };
   </script>
+  <link rel="stylesheet" href="/static/app.css" />
   {% block head %}{% endblock %}
 </head>
-<body class="h-full bg-slate-50 text-slate-900 antialiased">
-  <header class="border-b border-slate-200 bg-white shadow-sm">
-    <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-      <div>
-        <a href="/" class="text-lg font-semibold text-brand-900">CVE-to-My-Stack</a>
-        <p class="text-sm text-slate-500">CyberHack 2026 · Offline prioritised CVE list</p>
-      </div>
+<body class="flex min-h-full flex-col font-sans text-slate-900 antialiased">
+  <header class="glass-header sticky top-0 z-40 border-b border-slate-200/80">
+    <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
+      <a href="/" class="group flex items-center gap-3">
+        <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand-600 to-indigo-600 text-sm font-bold text-white shadow-md shadow-brand-600/25">CV</span>
+        <div>
+          <span class="block text-base font-semibold tracking-tight text-slate-900 group-hover:text-brand-700">CVE-to-My-Stack</span>
+          <span class="block text-xs text-slate-500">Offline · NVD + KEV + EPSS</span>
+        </div>
+      </a>
+      <nav class="flex items-center gap-2 text-sm">
+        <a href="/" class="rounded-lg px-3 py-2 font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900">Analyse</a>
+        <span class="hidden h-4 w-px bg-slate-200 sm:inline"></span>
+        <span class="hidden rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 sm:inline">CyberHack 2026</span>
+      </nav>
     </div>
   </header>
 
-  <main class="mx-auto max-w-6xl px-4 py-8">
+  <main class="mx-auto w-full min-w-0 max-w-6xl flex-1 overflow-x-hidden px-4 py-8 sm:px-6 sm:py-10">
     {% block content %}{% endblock %}
   </main>
 
-  <footer class="border-t border-slate-200 bg-white py-6 text-center text-sm text-slate-500">
-    Offline data only · NVD + CISA KEV + EPSS
+  <footer class="border-t border-slate-200/80 bg-white/60 py-8 text-center text-sm text-slate-500">
+    <p>All processing is local — no live CVE APIs.</p>
+    <p class="mt-1 text-xs text-slate-400">Ranked by CISA KEV → urgency (CVSS + EPSS) → EPSS → CVSS</p>
   </footer>
+
+  <script src="/static/app.js" defer></script>
+  {% block scripts %}{% endblock %}
 </body>
 </html>

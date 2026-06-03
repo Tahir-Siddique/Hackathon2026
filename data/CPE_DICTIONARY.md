@@ -33,4 +33,4 @@ Use results to confirm `vendor:product` strings in `config/normalisation_map.jso
 
 ## Not used by the main pipeline
 
-CVE matching uses CPE strings embedded in **NVD CVE JSON** (`CVE-2025.json`), not this dictionary. The CPE zip is for **building and verifying** the normalisation map only.
+CVE matching uses CPE strings embedded in **NVD CVE JSON** (`CVE-2026.json` by default), not this dictionary. The CPE zip is for **building and verifying** the normalisation map only.

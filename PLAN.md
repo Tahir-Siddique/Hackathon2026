@@ -43,7 +43,7 @@ Take an informal asset list (product names + versions) and output a **prioritise
 ```
 Hackathon2026/
 ├── data/
-│   ├── CVE-2025.json
+│   ├── CVE-2026.json
 │   ├── known_exploited_vulnerabilities.json
 │   ├── epss_scores-YYYY-MM-DD.csv
 │   └── sample_asset_list.txt
@@ -100,7 +100,7 @@ pip install -r requirements.txt
 
 - [x] **1.1** Load CISA KEV JSON → `set` of CVE IDs (`cveID` field)
 - [x] **1.2** Load EPSS CSV → `dict[cve_id] → {epss, percentile}`
-- [x] **1.3** Load NVD year JSON (e.g. `CVE-2025.json`) — keep in memory or lazy iterator
+- [x] **1.3** Load NVD year JSON (e.g. `CVE-2026.json`) — keep in memory or lazy iterator
 - [x] **1.4** Smoke-test each loader: print counts (KEV size, EPSS rows, NVD CVE count)
 - [x] **1.5** Inspect one NVD record manually — note paths for `id`, `metrics`, `configurations`, CPE `criteria`
 
@@ -306,7 +306,7 @@ python translate.py data\sample_asset_list.txt
 
 | File | Purpose |
 |------|---------|
-| `CVE-2025.json` | NVD CVE records (CPE, CVSS, descriptions) |
+| `CVE-2026.json` | NVD CVE records (CPE, CVSS, descriptions) |
 | `known_exploited_vulnerabilities.json` | CISA KEV — exploited CVE IDs |
 | `epss_scores-*.csv` | Daily EPSS scores |
 | `official-cpe-dictionary_v2.3.xml` | Reference for alias verification only |

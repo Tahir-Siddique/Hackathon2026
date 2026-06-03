@@ -11,6 +11,7 @@ def test_write_csv_columns(tmp_path):
         {
             "cve_id": "CVE-2025-0001",
             "affected_asset": "Chrome",
+            "criticality": "Critical",
             "cvss": 9.8,
             "epss": 0.85,
             "kev": "yes",
@@ -25,6 +26,7 @@ def test_write_csv_columns(tmp_path):
         row = next(reader)
         assert row["cve_id"] == "CVE-2025-0001"
         assert row["kev"] == "yes"
+        assert row["criticality"] == "Critical"
 
 
 def test_write_brief(tmp_path):
